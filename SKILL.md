@@ -49,6 +49,8 @@ Data: `{baseDir}/data/capabilities.json`
 
 首次使用或 `--check` 报 401 时 → 读 `{baseDir}/references/api-key-setup.md` 按里面流程引导用户。
 
+不要让用户把 Key 发到聊天里,也不要把 Key 内联写进命令。脚本会优先读取环境变量 `CATSAPI_API_KEY`,如果 OpenClaw 子进程没有继承环境变量,还会尝试从本地 `.env`、`~/.catsapi.env`、`~/.zshrc`、`~/.bashrc`、`~/.profile`、`~/.bash_profile` 里静态解析 `CATSAPI_API_KEY=...`。只用 `--check` 判断是否配置成功。
+
 快速自检:
 
 ```bash

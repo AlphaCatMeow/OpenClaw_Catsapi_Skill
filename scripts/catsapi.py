@@ -11,7 +11,7 @@ CatsAPI Client — OpenClaw Skill 的统一命令行客户端
     --status TASK_ID        查询单个任务状态
 
 环境变量:
-    CATSAPI_API_KEY         必填,形如 `cats-xxxxxxxx`
+    CATSAPI_API_KEY         形如 `cats-xxxxxxxx`;未继承环境变量时会尝试读取本地配置
     CATSAPI_BASE            可选,默认 https://catsapi.com
 
 所有输出:
@@ -27,6 +27,8 @@ import json
 import mimetypes
 import os
 import pathlib
+import re
+import shlex
 import sys
 import time
 import urllib.error
@@ -37,6 +39,7 @@ from typing import Any
 DEFAULT_BASE = "https://catsapi.com"
 POLL_INTERVAL = 3
 POLL_TIMEOUT = 900  # 15 分钟
+API_KEY_ENV = "CATSAPI_API_KEY"
 # 默认 Python urllib 的 UA 会被 catsapi.com 前面的 Cloudflare Bot Fight Mode 拦成 403,
 # 伪装成浏览器避免被指纹墙误伤。
 USER_AGENT = (
@@ -104,12 +107,89 @@ def _base_url() -> str:
     return os.environ.get("CATSAPI_BASE", DEFAULT_BASE).rstrip("/")
 
 
+def _looks_truncated_key(key: str) -> bool:
+    return "..." in key or "…" in key
+
+
+def _unquote_shell_value(value: str) -> str:
+    value = value.strip()
+    if not value:
+        return ""
+    try:
+        parts = shlex.split(value, comments=True, posix=True)
+    except ValueError:
+        parts = []
+    if parts:
+        return parts[0].strip()
+    # Drop a trailing inline comment for unquoted values.
+    if value[0] not in {"'", '"'} and " #" in value:
+        value = value.split(" #", 1)[0].rstrip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        return value[1:-1].strip()
+    return value.strip()
+
+
+def _read_key_assignment(path: pathlib.Path) -> str:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return ""
+    pattern = re.compile(rf"^\s*(?:export\s+)?{API_KEY_ENV}\s*=\s*(.+?)\s*$")
+    for line in text.splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        match = pattern.match(line)
+        if match:
+            return _unquote_shell_value(match.group(1))
+    return ""
+
+
+def _candidate_key_files() -> list[pathlib.Path]:
+    base_dir = pathlib.Path(__file__).resolve().parents[1]
+    cwd = pathlib.Path.cwd()
+    home = pathlib.Path.home()
+    paths = [
+        base_dir / ".env",
+        cwd / ".env",
+        home / ".catsapi.env",
+        home / ".zshrc",
+        home / ".bashrc",
+        home / ".profile",
+        home / ".bash_profile",
+    ]
+    seen: set[pathlib.Path] = set()
+    unique: list[pathlib.Path] = []
+    for path in paths:
+        try:
+            resolved = path.expanduser().resolve()
+        except OSError:
+            resolved = path.expanduser()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        unique.append(resolved)
+    return unique
+
+
+def _find_configured_api_key() -> str:
+    env_key = os.environ.get(API_KEY_ENV, "").strip()
+    if env_key:
+        return env_key
+    for path in _candidate_key_files():
+        key = _read_key_assignment(path).strip()
+        if key:
+            return key
+    return ""
+
+
 def _api_key() -> str:
-    key = os.environ.get("CATSAPI_API_KEY", "").strip()
+    key = _find_configured_api_key()
     if not key:
-        _die("环境变量 CATSAPI_API_KEY 未设置。\n"
-             "在 catsapi.com 登录后 → 个人中心 → API Key → 创建,然后:\n"
-             "  export CATSAPI_API_KEY=cats-xxxxxxxx")
+        _die("未找到有效 CATSAPI_API_KEY。\n"
+             "请在 catsapi.com 登录后 → 个人中心 → API Key → 创建,然后配置完整 Key。")
+    if _looks_truncated_key(key):
+        _die("CATSAPI_API_KEY 配置无效: 看起来像被省略或截断的占位符。"
+             "请重新复制完整 Key 后配置。")
     if not key.startswith("cats-"):
         _log("[WARN] API Key 看起来不像 catsapi 的格式 (应以 `cats-` 开头)")
     return key

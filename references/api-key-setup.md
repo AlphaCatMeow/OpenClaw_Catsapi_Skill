@@ -26,7 +26,7 @@
 > export CATSAPI_API_KEY=cats-你复制的Key
 > ```
 >
-> 想永久生效就写进 `~/.zshrc` 或 `~/.bashrc` 里。告诉我设置好了,我来帮你自检一下~
+> 想永久生效就写进 `~/.zshrc`、`~/.bashrc`、项目 `.env` 或 `~/.catsapi.env` 里。不要把 Key 发到聊天里,告诉我设置好了,我来帮你自检一下~
 
 ### Step 4: 自检
 
@@ -40,8 +40,7 @@ python3 {baseDir}/scripts/catsapi.py --check
 "API Key 搞定啦~ 目前余额 **N 猫币**,可以开始画图/生视频了!"
 
 失败(401/403):
-"Key 看起来没生效,可能是环境变量没 export 到当前 shell,
-或者 Key 被重置了。再确认一下 `echo $CATSAPI_API_KEY` 能打印出 `cats-` 开头的串吗?"
+"Key 看起来没生效,可能是配置没有被当前进程读取、Key 被截断,或者 Key 被重置了。请重新复制完整 Key 后保存,我再帮你用 `--check` 自检。不要把 Key 发到聊天里。"
 
 ## 常见问题
 
