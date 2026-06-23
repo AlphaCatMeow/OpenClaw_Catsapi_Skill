@@ -1,57 +1,41 @@
 # 视频生成模型菜单
 
-## ⚠️ 使用本文件的硬规则
+## 使用本文件的硬规则
 
-1. 用户想生视频时,**必须**先把下面菜单**原样**展示,等用户选。
-2. 生视频之前,先 `message` 发"开始生成啦,视频一般要 1-5 分钟,请稍等～🎬",再 `exec` 脚本。
-3. `--num` 对视频**必须**为 1。
-4. 不要擅自发明菜单顺序或名字。
+1. 本 skill 的视频模型**只支持** Seedance 2.0 和 GrokImageVideo。
+2. 用户已经明确点名支持模型时,直接使用对应模型,不要再展示菜单。
+3. 用户没有点名模型时,把下面菜单**原样**展示给用户,让他用数字选。
+4. 生视频之前,先 `message` 发"开始生成啦,视频一般要 1-5 分钟,请稍等～🎬",再 `exec` 脚本。
+5. `--num` 对视频**必须**为 1。
+6. 选定模型后,必须再读 `parameter-inference.md`,从用户描述中推断合法的 `resolution`、`duration`、`aspectRatio`、`mode` 等参数。
 
 ## 通用菜单(文生视频 / 带起始帧的图生视频都用这份)
 
-> 视频来啦~ 挑个喜欢的模型:
+> 视频来啦~ 当前 CatsApiSkill 支持这 2 个视频模型:
 >
-> 1. 🤖 **Grok Imagine Video** — xAI 出品,便宜、想象力强,适合创意短片
-> 2. 🚀 **Wan 2.5** — 性价比之王,1080p 又快又稳,默认推荐
-> 3. 🌱 **Seedance 2.0** — 字节最新,最长 15 秒,细节超棒,支持真人
-> 4. 🌊 **Hailuo 2** — Minimax 海螺,速度快画面细腻
-> 5. 🎯 **Kling O3** — 可灵 O3,人物运动最自然,拍人物首选
+> 1. 🌱 **Seedance 2.0** — 默认推荐,画面稳定、人物和细节更可靠,最长 15 秒
+> 2. 🤖 **GrokImageVideo** — xAI 风格,便宜、想象力强,适合创意短片
 >
-> 选几号?(默认 2,或者发"1/2/3/4/5")
+> 选几号?(默认 1,或者发"1/2")
 
-选中后对应的 `--model` / 必填参数 / 限制:
+选中后对应的 `--model` / 常用 `--param` / 限制:
 
 | # | 菜单名 | --model | 常用 --param | 备注 |
 |---|---|---|---|---|
-| 1 | Grok Imagine Video | `grokImagineVideo` | `resolution=480p`(默认) 或 `720p`、`duration=5`-`15`、`aspectRatio=16:9` 等 | 便宜,最高 720p |
-| 2 | Wan 2.5 | `wan25` | `resolution=480p`(默认) / `720p` / `1080p`、`duration=5`/`10`、`aspectRatio=16:9` | 最平衡 |
-| 3 | Seedance 2.0 | `seedance20` | `resolution=720p`(默认) / `480p`、`duration=4`-`15`、`aspectRatio=16:9`、`mode=fast`/`standard` | 最长 15s + 支持真人,**不支持 1080p** |
-| 4 | Hailuo 2 | `minimax` | `duration=6`/`10`、`mode=standard`/`pro` | 速度快,**没有 resolution 参数** |
-| 5 | Kling O3 | `klingAiO3` | `duration=3`-`15`、`aspectRatio=16:9`/`9:16`/`1:1`、`mode=pro`(默认) / `standard` | 支持起始帧 + 结束帧 + 参考图 |
-
-## 其他可调用的视频模型
-
-| model_key | 名字 | 场景 |
-|---|---|---|
-| `veo31` | Veo 3.1 | Google,电影感拉满,价高 |
-| `sora` | Sora 2 | OpenAI,想象力天花板,**很贵** |
-| `klingAiV3` | Kling AI v3 | 可灵 v3,稳定老选择 |
-| `wan` | Wan 2.2 | 旧版 Wan,2.5 不够时备选 |
-| `klingAiV26` | Kling 2.6 | Kling 2.6 标准 |
-| `klingAiV26Motion` | Kling 2.6 Motion Control | 运动控制专用 |
-| `seedance15Pro` | Seedance 1.5 Pro | 旧版 |
-| `seedancePro` | Seedance Pro | |
-| `lumaLabs` | Luma Labs | Luma Dream Machine |
-| `runway` | Runway | Runway Gen |
-| `topaz` | Topaz Upscaler | **视频 4K 升级专用**,不是生视频 |
+| 1 | Seedance 2.0 | `seedance20` | `resolution=720p`(默认) / `480p`;`duration=4`-`15`;`aspectRatio=16:9` / `9:16` / `1:1`;`mode=fast` | 支持起始帧、结束帧、最多 4 张参考图;主工程当前只开放 fast 模式,不支持 1080p |
+| 2 | GrokImageVideo | `grokImagineVideo` | `resolution=480p`(默认) / `720p`;`duration=5`-`15`;`aspectRatio=1:1` / `16:9` / `9:16` 等 | 支持起始帧,不支持结束帧 |
 
 ## 图生视频提示
 
 如果用户传了图片想做成视频:
 
-- **纯起始帧** → 任意模型 + `--start-frame /path/to/frame.png`
-- **首尾帧** → 优先 Kling 家族,加 `--start-frame` 和 `--end-frame`
-- **真人 / 人物动作** → 首选 `seedance20` 或 `klingAiV3`(运动自然)
+- **纯起始帧** → Seedance 2.0 或 GrokImageVideo 都可以,加 `--start-frame /path/to/frame.png`
+- **首尾帧** → 只用 Seedance 2.0,加 `--start-frame` 和 `--end-frame`
+- **多张参考图** → Seedance 2.0,重复传 `--reference-image /path/to/ref.png`,最多 4 张
+- **真人 / 人物动作 / 稳定性优先** → 首选 Seedance 2.0
+- **创意短片 / 想象力优先 / 成本敏感** → 可选 GrokImageVideo
+
+主工程模型 schema 里还有 `referenceVideos` / `referenceAudio`,但当前 `/api/tasks` 文件输入链路仍按图片素材校验,只接受 JPG/PNG/WEBP。不要在 CLI 中承诺视频/音频参考素材,除非主工程后端也接通了对应文件类型。
 
 ## 调用示例
 
@@ -59,15 +43,15 @@
 # 步骤 1: 告诉用户要等
 # (通过 message 工具发: "开始生成啦,视频一般 1-5 分钟,稍等～🎬")
 
-# 步骤 2: 先预览成本(可选,贵的模型强烈建议)
+# 步骤 2: 先预览成本(可选,长视频建议)
 python3 {baseDir}/scripts/catsapi.py --cost \
-  --type video --model wan25 \
-  --resolution 1080p --duration 5 --num 1
+  --type video --model seedance20 \
+  --resolution 720p --duration 5 --num 1
 
 # 步骤 3: 执行
 python3 {baseDir}/scripts/catsapi.py --generate --type video \
-  --model wan25 --prompt "a ginger cat walking through a sunflower field, cinematic" \
-  --param resolution=1080p --param duration=5 --param aspectRatio=16:9 \
+  --model seedance20 --prompt "a ginger cat walking through a sunflower field, cinematic" \
+  --param resolution=720p --param duration=5 --param aspectRatio=16:9 \
   -o /tmp/openclaw/catsapi-output/cat_$(date +%s).mp4
 ```
 
@@ -78,7 +62,7 @@ COST:6
 OUTPUT_FILE:/tmp/openclaw/catsapi-output/cat_xxxxxxxx.mp4
 ```
 
-走 `message` 工具交付视频文件,然后:"视频出炉啦~ 花了 6 猫币,要不要剪个长一点的版本或者升到 4K?"
+走 `message` 工具交付视频文件,然后:"视频出炉啦~ 花了 6 猫币,要不要换个镜头运动再来一版?"
 
 ## 慢任务兜底
 

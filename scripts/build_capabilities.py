@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 从 catsapi 后端的两份模型定义生成精简版 capabilities.json,供 skill 的 references 使用。
+当前 skill 会按 SUPPORTED_IMAGE_MODELS / SUPPORTED_VIDEO_MODELS 过滤为支持子集。
 
 用法:
     python3 build_capabilities.py \
@@ -24,6 +25,17 @@ USER_AGENT = (
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/124.0.0.0 Safari/537.36"
 )
+SUPPORTED_IMAGE_MODELS = {
+    "gptImage2",
+    "nanoBanana2",
+    "nanoBananaPro",
+    "flux2Pro",
+    "grokImagineImage",
+}
+SUPPORTED_VIDEO_MODELS = {
+    "seedance20",
+    "grokImagineVideo",
+}
 
 
 def _extract_param_schema(schema: dict) -> dict:
@@ -67,9 +79,11 @@ def _build_from_files(image_path: pathlib.Path, video_path: pathlib.Path) -> dic
         "source": "local-files",
         "image_models": {
             k: {"params": _extract_param_schema(v)} for k, v in image_settings.items()
+            if k in SUPPORTED_IMAGE_MODELS
         },
         "video_models": {
             k: {"params": _extract_param_schema(v)} for k, v in video_settings.items()
+            if k in SUPPORTED_VIDEO_MODELS
         },
     }
 
@@ -95,6 +109,7 @@ def _build_from_api(base: str) -> dict:
                 "params": _extract_param_schema(m.get("params_schema", {})),
             }
             for m in img
+            if m.get("model_key") in SUPPORTED_IMAGE_MODELS
         },
         "video_models": {
             m["model_key"]: {
@@ -105,6 +120,7 @@ def _build_from_api(base: str) -> dict:
                 "params": _extract_param_schema(m.get("params_schema", {})),
             }
             for m in vid
+            if m.get("model_key") in SUPPORTED_VIDEO_MODELS
         },
     }
 

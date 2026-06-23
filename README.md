@@ -4,12 +4,12 @@
 
 一款面向 [OpenClaw](https://openclaw.ai) / Cursor / Claude Code / Codex CLI 等支持 **Agent Skills** 标准的客户端的技能包,让 AI 助手直接调用 [猫影工坊 (catsapi.com)](https://catsapi.com) 的生图、生视频能力。
 
-**24 个图片模型 + 16 个视频模型**,覆盖:
+当前版本采用精简模型范围:
 
 | 类别 | 数量 | 代表模型 |
 |---|---:|---|
-| 图片生成 | 24 | GPT Image 1.5/2、Nano Banana 2/Pro、Midjourney、FLUX.2 Pro、Seedream 4.5、Grok Imagine Image |
-| 视频生成 | 16 | Wan 2.5、Kling AI v3/O3/v2.6、Seedance 2.0、Hailuo 2、Luma Labs、Runway、Grok Imagine Video |
+| 图片生成 | 5 | GPT Image 2、Nano Banana 2、Nano Banana Pro、FLUX.2 Pro、GrokImage |
+| 视频生成 | 2 | Seedance 2.0、GrokImageVideo |
 
 ## 快速开始
 
@@ -68,17 +68,17 @@ python3 scripts/catsapi.py --check
 # 文生图
 python3 scripts/catsapi.py --generate --type image \
   --model nanoBananaPro --prompt "一只戴墨镜的橘猫在海边" \
-  --param size=2K -o /tmp/cat.png
+  --param resolution=2K --param aspectRatio=16:9 -o /tmp/cat.png
 
 # 文生视频
 python3 scripts/catsapi.py --generate --type video \
-  --model wan25 --prompt "a cat walking through a garden" \
-  --param resolution=1080p --param duration=5 \
+  --model seedance20 --prompt "a cat walking through a garden" \
+  --param resolution=720p --param duration=5 --param aspectRatio=16:9 \
   -o /tmp/cat.mp4
 
 # 费用预览
-python3 scripts/catsapi.py --cost --type video --model wan25 \
-  --resolution 1080p --duration 10
+python3 scripts/catsapi.py --cost --type video --model seedance20 \
+  --resolution 720p --duration 10
 
 # 模型列表
 python3 scripts/catsapi.py --list --type image
@@ -90,9 +90,11 @@ python3 scripts/catsapi.py --list --type image
 
 - _"帮我画一只在公园里玩耍的小狗"_
 - _"把这张图做成视频"_
-- _"给这张图片放大到 4K"_
+- _"用 Nano Banana Pro 出一张 4K 竖屏海报"_
 - _"我账上还有多少猫币?"_
-- _"用 Kling 做 10 秒 1080p 的视频要多少钱?"_
+- _"用 Seedance 2.0 做 10 秒 720p 的视频要多少钱?"_
+
+Agent 会根据用户描述自动推断常见参数,比如横屏/竖屏、方图、4K、720p、5 秒/10 秒等,并按当前模型的合法参数调用脚本。
 
 助手会自动选模型、走费用预览、提交任务、轮询结果,最后通过 `message` 工具把图/视频交付给你。
 

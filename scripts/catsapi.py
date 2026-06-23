@@ -44,6 +44,51 @@ USER_AGENT = (
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/124.0.0.0 Safari/537.36"
 )
+SUPPORTED_MODELS = {
+    "image": {
+        "gptImage2",
+        "nanoBanana2",
+        "nanoBananaPro",
+        "flux2Pro",
+        "grokImagineImage",
+    },
+    "video": {
+        "seedance20",
+        "grokImagineVideo",
+    },
+}
+MODEL_ALIASES = {
+    "gptImage2": "gptImage2",
+    "gptimage2": "gptImage2",
+    "nanoBanana2": "nanoBanana2",
+    "nanobanana2": "nanoBanana2",
+    "nanoBananaPro": "nanoBananaPro",
+    "nanobananapro": "nanoBananaPro",
+    "flux2Pro": "flux2Pro",
+    "flux2pro": "flux2Pro",
+    "grokImage": "grokImagineImage",
+    "grokimage": "grokImagineImage",
+    "grokImagineImage": "grokImagineImage",
+    "grokimagineimage": "grokImagineImage",
+    "seedance20": "seedance20",
+    "seedance2": "seedance20",
+    "seedance2.0": "seedance20",
+    "grokImageVideo": "grokImagineVideo",
+    "grokimagevideo": "grokImagineVideo",
+    "grokImagineVideo": "grokImagineVideo",
+    "grokimaginevideo": "grokImagineVideo",
+}
+
+
+def _normalize_model(model_key: str | None, task_type: str) -> str | None:
+    if not model_key:
+        return None
+    normalized = MODEL_ALIASES.get(model_key, MODEL_ALIASES.get(model_key.lower(), model_key))
+    allowed = SUPPORTED_MODELS.get(task_type, set())
+    if normalized not in allowed:
+        supported = ", ".join(sorted(allowed))
+        _die(f"此 skill 当前不支持模型 `{model_key}`。type={task_type} 仅支持: {supported}")
+    return normalized
 
 
 def _log(msg: str) -> None:
@@ -125,8 +170,9 @@ def cmd_check() -> None:
 
 def cmd_list(task_type: str) -> None:
     data = _get(f"/api/models?type={urllib.parse.quote(task_type)}")
-    models = data.get("models", [])
-    _log(f"[OK] {task_type} 模型共 {len(models)} 个")
+    allowed = SUPPORTED_MODELS.get(task_type, set())
+    models = [m for m in data.get("models", []) if m.get("model_key") in allowed]
+    _log(f"[OK] {task_type} 模型共 {len(models)} 个 (skill allowlist)")
     slim = [
         {
             "model_key": m["model_key"],
@@ -142,6 +188,7 @@ def cmd_list(task_type: str) -> None:
 
 
 def cmd_info(model_key: str, task_type: str) -> None:
+    model_key = _normalize_model(model_key, task_type) or model_key
     data = _get(f"/api/models?type={urllib.parse.quote(task_type)}")
     for m in data.get("models", []):
         if m["model_key"] == model_key:
@@ -151,6 +198,7 @@ def cmd_info(model_key: str, task_type: str) -> None:
 
 
 def cmd_cost(args: argparse.Namespace) -> None:
+    args.model = _normalize_model(args.model, args.type)
     body: dict[str, Any] = {
         "model": args.model,
         "task_type": args.type,
@@ -205,6 +253,15 @@ def _download(url: str, out_path: str) -> None:
 
 
 def cmd_generate(args: argparse.Namespace) -> None:
+    args.model = _normalize_model(args.model, args.type)
+    if args.type == "image" and (args.start_frame or args.end_frame or args.reference_image):
+        _die("图片任务请用 --image 传参考图; --start-frame/--end-frame/--reference-image 仅用于视频任务")
+    if args.type == "video" and args.image:
+        _die("视频任务请用 --start-frame 或 --reference-image 传图片素材,不要用 --image")
+    if args.end_frame and args.model != "seedance20":
+        _die("当前支持模型中只有 Seedance 2.0 支持 --end-frame")
+    if args.reference_image and args.model != "seedance20":
+        _die("当前支持模型中只有 Seedance 2.0 支持 --reference-image")
     params = _parse_params(args.param)
     body: dict[str, Any] = {
         "model": args.model,
@@ -219,6 +276,10 @@ def cmd_generate(args: argparse.Namespace) -> None:
         body.setdefault("files", {})["startFrame"] = _encode_image(args.start_frame)
     if args.end_frame:
         body.setdefault("files", {})["endFrame"] = _encode_image(args.end_frame)
+    if args.reference_image:
+        body.setdefault("files", {})["referenceImages"] = [
+            _encode_image(p) for p in args.reference_image
+        ]
 
     _log(f"[INFO] 提交 {args.type} 任务 model={args.model} ...")
     task = _post("/api/tasks", body)
@@ -299,7 +360,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p.add_argument("--type", choices=["image", "video"], default="image",
                    help="任务类型 (默认 image)")
-    p.add_argument("--model", help="模型 key,例如 nanoBananaPro / wan25")
+    p.add_argument("--model", help="模型 key,例如 nanoBananaPro / seedance20")
     p.add_argument("--prompt", help="提示词")
     p.add_argument("--param", action="append", default=[],
                    metavar="KEY=VALUE",
@@ -313,6 +374,8 @@ def build_parser() -> argparse.ArgumentParser:
                    metavar="PATH", help="图生图输入,可重复")
     p.add_argument("--start-frame", metavar="PATH", help="视频起始帧")
     p.add_argument("--end-frame", metavar="PATH", help="视频结束帧")
+    p.add_argument("--reference-image", action="append", default=[],
+                   metavar="PATH", help="视频参考图,可重复。Seedance 2.0 最多 4 张")
     p.add_argument("-o", "--output", metavar="PATH",
                    help="输出文件路径。多图时会在 stem 后追加 _1/_2...")
     return p

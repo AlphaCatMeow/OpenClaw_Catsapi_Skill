@@ -4,12 +4,12 @@
 
 An **Agent Skills**-standard skill pack that lets AI assistants in OpenClaw / Cursor / Claude Code / Codex CLI directly call [CatsAPI (catsapi.com)](https://catsapi.com) for image and video generation.
 
-**24 image models + 16 video models**, covering:
+This version intentionally keeps a compact supported model set:
 
 | Category | Count | Examples |
 |---|---:|---|
-| Image generation | 24 | GPT Image 1.5/2, Nano Banana 2/Pro, Midjourney, FLUX.2 Pro, Seedream 4.5, Grok Imagine Image |
-| Video generation | 16 | Wan 2.5, Kling AI v3/O3/v2.6, Seedance 2.0, Hailuo 2, Luma Labs, Runway, Grok Imagine Video |
+| Image generation | 5 | GPT Image 2, Nano Banana 2, Nano Banana Pro, FLUX.2 Pro, GrokImage |
+| Video generation | 2 | Seedance 2.0, GrokImageVideo |
 
 ## Quick Start
 
@@ -59,17 +59,17 @@ python3 scripts/catsapi.py --check
 # Text-to-image
 python3 scripts/catsapi.py --generate --type image \
   --model nanoBananaPro --prompt "an orange cat wearing sunglasses by the sea" \
-  --param size=2K -o /tmp/cat.png
+  --param resolution=2K --param aspectRatio=16:9 -o /tmp/cat.png
 
 # Text-to-video
 python3 scripts/catsapi.py --generate --type video \
-  --model wan25 --prompt "a cat walking through a garden" \
-  --param resolution=1080p --param duration=5 \
+  --model seedance20 --prompt "a cat walking through a garden" \
+  --param resolution=720p --param duration=5 --param aspectRatio=16:9 \
   -o /tmp/cat.mp4
 
 # Cost preview
-python3 scripts/catsapi.py --cost --type video --model wan25 \
-  --resolution 1080p --duration 10
+python3 scripts/catsapi.py --cost --type video --model seedance20 \
+  --resolution 720p --duration 10
 
 # List enabled models
 python3 scripts/catsapi.py --list --type image
@@ -81,11 +81,11 @@ After installing the skill, just talk to the agent naturally:
 
 - _"Draw me a puppy playing in the park"_
 - _"Turn this image into a video"_
-- _"Upscale this photo to 4K"_
+- _"Generate a 4K vertical poster with Nano Banana Pro"_
 - _"How many coins do I have?"_
-- _"How much would a 10s 1080p Kling video cost?"_
+- _"How much would a 10s 720p Seedance 2.0 video cost?"_
 
-The agent picks the model, previews cost, submits the task, polls, and delivers the result via the `message` tool.
+The agent infers common parameters such as landscape/portrait/square, 4K, 720p, and 5s/10s from the user's wording, then calls the script with parameters supported by the selected model.
 
 ## Project Structure
 

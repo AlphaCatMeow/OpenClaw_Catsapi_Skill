@@ -1,6 +1,6 @@
 ---
 name: catsapi
-description: "Generate images and videos through CatsAPI (猫影工坊) — 24 image models covering GPT Image, Nano Banana, Midjourney, FLUX, Recraft, Ideogram, and 16 video models covering Sora 2, Wan 2.5, Kling, Runway, Veo 3.1, Luma, Seedance. Use when the user wants to draw, generate pictures, generate videos, text-to-image, image-to-video, or mentions 猫影工坊 / catsapi / cats-xxxxx API key."
+description: "Generate images and videos through CatsAPI (猫影工坊) — image generation is limited to GPT Image 2, Nano Banana 2, Nano Banana Pro, FLUX.2 Pro, and GrokImage; video generation is limited to Seedance 2.0 and GrokImageVideo. Use when the user wants to draw, generate pictures, generate videos, text-to-image, image-to-video, or mentions 猫影工坊 / catsapi / cats-xxxxx API key."
 homepage: https://catsapi.com
 metadata:
  {
@@ -34,8 +34,9 @@ Data: `{baseDir}/data/capabilities.json`
 3. **交付走 `message` 工具**,不要以文本形式打印文件路径或 `![](url)` markdown。
 4. **不要展示 catsapi.com 内部 URL**(例如 `https://catsapi.com/uploads/...`),用户打不开。
 5. **永远报告成本**:脚本会输出 `COST:N` 行,把它自然地说出来:"花了 N 猫币"。
-6. **图/视频生成前必须先读对应 reference 文件**,按里面的菜单让用户选型号。**严禁擅自发明菜单、改写模型排序、跳过选择步骤。**
-7. **慢任务(视频/4K 升级)执行前**,先 `message` 通知用户:"开始生成啦,视频一般要 1-5 分钟,请稍等～🎬",然后再 `exec` 脚本。
+6. **图/视频生成前必须先读对应 reference 文件**。如果用户没有明确点名模型,按文件里的精简菜单让用户选;如果用户已经明确点名支持的模型,可直接使用,不要重复问。
+7. **生成前先读 `{baseDir}/references/parameter-inference.md`**,用 AI 从用户描述中推断分辨率、画幅、时长、质量等参数。能推断且合法就直接填入;只有用户描述互相冲突、参数不被所选模型支持、或会显著影响成本时才追问。
+8. **慢任务(视频)执行前**,先 `message` 通知用户:"开始生成啦,视频一般要 1-5 分钟,请稍等～🎬",然后再 `exec` 脚本。
 
 ## API Key 配置
 
@@ -51,11 +52,11 @@ python3 {baseDir}/scripts/catsapi.py --check
 
 | 用户意图 | 做什么 |
 |---|---|
-| **文生图 / "画个..." / "生成一张..."** | **⚠️ 必须先读 `{baseDir}/references/image-models.md`**,呈现 6 选 1 菜单等用户选择 |
-| **图生图 / 图片编辑 / "把这张图..."** | **⚠️ 必须先读 `{baseDir}/references/image-models.md`**,用户有传图时用 "编辑类" 菜单 |
-| **文生视频 / 图生视频 / "做成视频"** | **⚠️ 必须先读 `{baseDir}/references/video-models.md`**,呈现 5 选 1 菜单等用户选择 |
-| **图片放大 / 去噪 / 4K** | `--model magnific --type image`,菜单里单列 |
-| **视频放大 / 4K 升级** | `--model topaz --type video`,慢任务需提前通知 |
+| **文生图 / "画个..." / "生成一张..."** | **⚠️ 先读 `{baseDir}/references/image-models.md`**,仅在用户未指定模型时呈现 5 选 1 菜单 |
+| **图生图 / 图片编辑 / "把这张图..."** | **⚠️ 先读 `{baseDir}/references/image-models.md`**,只使用同一组 5 个图片模型的 `imagePrompt` 能力 |
+| **文生视频 / 图生视频 / "做成视频"** | **⚠️ 先读 `{baseDir}/references/video-models.md`**,仅在用户未指定模型时呈现 2 选 1 菜单 |
+| **图片 4K / 高清** | 用支持 4K/大尺寸的图片模型参数,如 `gptImage2 size=3840x2160` 或 `nanoBananaPro resolution=4K`;不调用独立放大模型 |
+| **视频高清** | 仅在 Seedance 2.0 / GrokImageVideo 的合法 `resolution` 范围内选择,不调用独立放大模型 |
 | **费用预览 / "这个要多少钱"** | `--cost --model X --type image/video --resolution ... --duration ...`(详见下方"费用预览"段) |
 | **任务状态 / "好了吗"** | `--status TASK_ID` |
 | **余额查询 / "我还有多少猫币"** | `--check`,输出 `{"balance": N}` |
@@ -80,22 +81,16 @@ python3 {baseDir}/scripts/catsapi.py --generate --type image \
 
 # 文生视频
 python3 {baseDir}/scripts/catsapi.py --generate --type video \
-  --model wan25 --prompt "a cat walking through a garden" \
-  --param resolution=1080p --param duration=5 --param aspectRatio=16:9 \
+  --model seedance20 --prompt "a cat walking through a garden" \
+  --param resolution=720p --param duration=5 --param aspectRatio=16:9 \
   -o /tmp/openclaw/catsapi-output/cat_$(date +%s).mp4
 
 # 图生视频(需要起始帧)
 python3 {baseDir}/scripts/catsapi.py --generate --type video \
-  --model klingAiV3 --prompt "让小猫慢慢转过头" \
+  --model seedance20 --prompt "让小猫慢慢转过头" \
   --start-frame /path/to/input.png \
-  --param resolution=1080p --param duration=5 \
+  --param resolution=720p --param duration=5 \
   -o /tmp/openclaw/catsapi-output/turn_$(date +%s).mp4
-
-# 图片编辑(Qwen Image Edit)
-python3 {baseDir}/scripts/catsapi.py --generate --type image \
-  --model qwenImageEdit --prompt "把背景换成赛博朋克风" \
-  --image /path/to/photo.jpg \
-  -o /tmp/openclaw/catsapi-output/edit_$(date +%s).png
 ```
 
 **探索/辅助命令:**
@@ -103,7 +98,7 @@ python3 {baseDir}/scripts/catsapi.py --generate --type image \
 ```bash
 python3 {baseDir}/scripts/catsapi.py --check                      # 验 Key + 余额
 python3 {baseDir}/scripts/catsapi.py --list --type image          # 看所有启用的图模型
-python3 {baseDir}/scripts/catsapi.py --info nanoBananaPro --type image   # 看某模型的参数
+python3 {baseDir}/scripts/catsapi.py --info nanoBananaPro --type image   # 看支持模型的参数
 python3 {baseDir}/scripts/catsapi.py --status TASK_ID             # 查任务
 ```
 
@@ -113,8 +108,8 @@ python3 {baseDir}/scripts/catsapi.py --status TASK_ID             # 查任务
 
 ```bash
 python3 {baseDir}/scripts/catsapi.py --cost \
-  --type video --model wan25 \
-  --resolution 1080p --duration 10 --num 1
+  --type video --model seedance20 \
+  --resolution 720p --duration 10 --num 1
 ```
 
 返回形如 `{"unit_cost":6,"total_cost":6,"balance":120,"sufficient":true}`,
