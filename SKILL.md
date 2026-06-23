@@ -27,6 +27,13 @@ Data: `{baseDir}/data/capabilities.json`
 - 不要跟用户提 `model_key`(如 `nanoBananaPro`),要用中文名("Nano Banana Pro / 香蕉 Pro")
 - 图/视频交付后,主动问下一步:"要不要把它做成视频?"、"要不要放大到 4K?"
 
+## 输出卫生
+
+- **不要把内部推理、模型选择过程、自我纠错、工具调用计划、重试原因、stderr 日志、命令细节发给用户**。禁止出现类似"用户描述没有指定模型..."、"不对..."、"重跑..."这类过程文字。
+- **不要展示、转述或暗示 API Key 的真实内容、占位符、截断形式或修复过程**。Key 配置有问题时只说:"API Key 配置好像有问题,需要重新配置一下。"
+- 用户可见消息只保留必要内容:开始生成提示、需要用户确认的问题、生成完成与成本、交付后的简短下一步建议。
+- 如果自动选择模型,只在最终消息里自然说明"这次用的是 Nano Banana Pro"等结果,不要解释完整决策链。
+
 ## CRITICAL RULES
 
 1. **永远走脚本**,不要直接 `curl` CatsAPI。所有生成/查询都通过 `scripts/catsapi.py`。
@@ -34,7 +41,7 @@ Data: `{baseDir}/data/capabilities.json`
 3. **交付走 `message` 工具**,不要以文本形式打印文件路径或 `![](url)` markdown。
 4. **不要展示 catsapi.com 内部 URL**(例如 `https://catsapi.com/uploads/...`),用户打不开。
 5. **永远报告成本**:脚本会输出 `COST:N` 行,把它自然地说出来:"花了 N 猫币"。
-6. **图/视频生成前必须先读对应 reference 文件**。如果用户没有明确点名模型,按文件里的精简菜单让用户选;如果用户已经明确点名支持的模型,可直接使用,不要重复问。
+6. **图/视频生成前必须先读对应 reference 文件**。如果用户明确点名支持模型,直接使用;如果用户没有点名模型,按 reference 的默认推荐自动选择。只有用户要求"让我选/有哪些模型/换个模型"或意图确实不明确时,才展示精简菜单。
 7. **生成前先读 `{baseDir}/references/parameter-inference.md`**,用 AI 从用户描述中推断分辨率、画幅、时长、质量等参数。能推断且合法就直接填入;只有用户描述互相冲突、参数不被所选模型支持、或会显著影响成本时才追问。
 8. **慢任务(视频)执行前**,先 `message` 通知用户:"开始生成啦,视频一般要 1-5 分钟,请稍等～🎬",然后再 `exec` 脚本。
 
@@ -52,9 +59,9 @@ python3 {baseDir}/scripts/catsapi.py --check
 
 | 用户意图 | 做什么 |
 |---|---|
-| **文生图 / "画个..." / "生成一张..."** | **⚠️ 先读 `{baseDir}/references/image-models.md`**,仅在用户未指定模型时呈现 5 选 1 菜单 |
+| **文生图 / "画个..." / "生成一张..."** | **⚠️ 先读 `{baseDir}/references/image-models.md`**,用户未指定模型时按默认推荐自动选择;用户要求选择时才呈现 5 选 1 菜单 |
 | **图生图 / 图片编辑 / "把这张图..."** | **⚠️ 先读 `{baseDir}/references/image-models.md`**,只使用同一组 5 个图片模型的 `imagePrompt` 能力 |
-| **文生视频 / 图生视频 / "做成视频"** | **⚠️ 先读 `{baseDir}/references/video-models.md`**,仅在用户未指定模型时呈现 2 选 1 菜单 |
+| **文生视频 / 图生视频 / "做成视频"** | **⚠️ 先读 `{baseDir}/references/video-models.md`**,用户未指定模型时按默认推荐自动选择;用户要求选择时才呈现 2 选 1 菜单 |
 | **图片 4K / 高清** | 用支持 4K/大尺寸的图片模型参数,如 `gptImage2 size=3840x2160` 或 `nanoBananaPro resolution=4K`;不调用独立放大模型 |
 | **视频高清** | 仅在 Seedance 2.0 / GrokImageVideo 的合法 `resolution` 范围内选择,不调用独立放大模型 |
 | **费用预览 / "这个要多少钱"** | `--cost --model X --type image/video --resolution ... --duration ...`(详见下方"费用预览"段) |
