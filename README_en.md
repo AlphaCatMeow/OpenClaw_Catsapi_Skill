@@ -1,4 +1,4 @@
-# CatsAPI Skill
+# CatsAPI Agent Skill
 
 [中文](README.md)
 
@@ -28,7 +28,7 @@ Generate and edit images, and generate videos through [CatsAPI](https://catsapi.
 The repository root is the Skill root, with [SKILL.md](SKILL.md) as its entry point. Clone into a Skill directory supported by your host and enable it there, or keep a standalone checkout and register that directory with your host:
 
 ```bash
-git clone https://github.com/maodeyu180/OpenClaw_Catsapi_Skill.git catsapi
+git clone https://github.com/maodeyu180/CatsAPI-Agent-Skill.git catsapi
 ```
 
 In OpenClaw, you can also ask the assistant to install `catsapi` from this repository. A Git submodule in the main-site repository is not required.

@@ -1,4 +1,4 @@
-# CatsAPI Skill
+# CatsAPI Agent Skill
 
 [English](README_en.md)
 
@@ -28,7 +28,7 @@
 仓库根目录就是 Skill 根目录，入口为 [SKILL.md](SKILL.md)。克隆到宿主支持的 Skill 目录并按宿主配置启用，也可以保留独立仓库、在宿主中关联这个目录：
 
 ```bash
-git clone https://github.com/maodeyu180/OpenClaw_Catsapi_Skill.git catsapi
+git clone https://github.com/maodeyu180/CatsAPI-Agent-Skill.git catsapi
 ```
 
 在 OpenClaw 中也可以要求助手从上述仓库安装 `catsapi`。使用时不需要把它作为主站的 Git submodule。

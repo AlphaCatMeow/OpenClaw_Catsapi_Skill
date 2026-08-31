@@ -1,11 +1,11 @@
-# OpenClaw CatsAPI Skill 维护说明
+# CatsAPI Agent Skill 维护说明
 
 本仓库是 CatsAPI 主站的独立 Agent Skill / CLI 客户端，不再位于主站 `.cursor/skills/catsapi` 子模块内。
 
 ## 关联项目
 
 - 主站：`/Users/yu/Developers/github_personal/personal_projects/ldc_gen_image`。
-- 本仓库：`/Users/yu/Developers/github_personal/catsapi_relation/OpenClaw_Catsapi_Skill`；远端 `git@github.com:maodeyu180/OpenClaw_Catsapi_Skill.git`。
+- 本仓库：`/Users/yu/Developers/github_personal/catsapi_relation/CatsAPI-Agent-Skill`；远端 `git@github.com:maodeyu180/CatsAPI-Agent-Skill.git`。
 - 同级 ComfyUI 客户端：`/Users/yu/Developers/github_personal/catsapi_relation/ComfyUI_Catsapi`。
 - 本地联合维护规则见上一层 `AGENTS.md`；涉及主站文件时先阅读主站 `AGENTS.md`。
 

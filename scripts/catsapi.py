@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CatsAPI Client — OpenClaw Skill 的统一命令行客户端
+CatsAPI Client — 通用 Agent Skill 的统一命令行客户端
 
 支持的动作:
     --check                 验证 API Key + 查询余额
@@ -596,7 +596,7 @@ def cmd_status(task_id: str) -> None:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="catsapi.py",
-        description="CatsAPI client for OpenClaw Skill",
+        description="CatsAPI client for Agent Skills-compatible assistants",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     g = p.add_mutually_exclusive_group(required=True)
