@@ -4,6 +4,33 @@
 
 Generate and edit images, and generate videos through [CatsAPI](https://catsapi.com) in Agent Skills-compatible hosts. The Skill handles intent and delivery; a standard-library Python CLI validates parameters, previews cost, submits tasks, and resumes existing ones.
 
+## Compatible Agents
+
+This is not an OpenClaw-only plugin. The project uses the [Agent Skills](https://agentskills.io/home) structure of `SKILL.md` plus scripts and references. It targets agents that can read skills, execute Python, and access the network, regardless of which language model powers the host.
+
+The following agents document Skill support and are integration targets. **This list verifies host capabilities and installation locations, not end-to-end testing of CatsAPI on every client, version, or runtime.** Official documentation checked on 2026-08-31; follow the agent links for installation details.
+
+| Agent | Project / workspace location | User-level location |
+| --- | --- | --- |
+| [Hermes Agent](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills/) | `.hermes/skills/catsapi/` (requires project trust) | `~/.hermes/skills/catsapi/` |
+| [OpenClaw](https://docs.openclaw.ai/tools/skills) | `<workspace>/skills/catsapi/` | `~/.openclaw/skills/catsapi/` |
+| [Claude Code](https://code.claude.com/docs/en/skills) | `.claude/skills/catsapi/` | `~/.claude/skills/catsapi/` |
+| [Codex (CLI / IDE / local desktop tasks)](https://developers.openai.com/codex/skills/) | `.agents/skills/catsapi/` | `~/.agents/skills/catsapi/` |
+| [Cursor Agent](https://cursor.com/docs/skills) | `.cursor/skills/catsapi/` | `~/.cursor/skills/catsapi/` |
+| [Gemini CLI](https://geminicli.com/docs/cli/skills/) | `.gemini/skills/catsapi/` | `~/.gemini/skills/catsapi/` |
+| [OpenCode](https://opencode.ai/docs/skills/) | `.opencode/skills/catsapi/` | `~/.config/opencode/skills/catsapi/` |
+| [GitHub Copilot (CLI / IDE agent mode)](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills) | `.github/skills/catsapi/` | `~/.copilot/skills/catsapi/` |
+| [Cline](https://docs.cline.bot/customization/skills) | `.cline/skills/catsapi/` | `~/.cline/skills/catsapi/` |
+| [Windsurf / Devin Desktop (Cascade)](https://docs.devin.ai/desktop/cascade/skills) | `.windsurf/skills/catsapi/` | `~/.codeium/windsurf/skills/catsapi/` |
+
+These are common locations, not exhaustive search paths. Custom profiles, remote machines, and containers follow the host's configuration. Keep the installed directory named `catsapi` to match the `name` in `SKILL.md`. Install the complete repository, not just `SKILL.md`, so scripts, model snapshots, and references remain available.
+
+Other Agent Skills-compatible agents should also be able to integrate it. Agents without a native Skill loader can read the entry point and invoke the CLI manually, but require their own directory mapping and trigger instructions. The full workflow also requires:
+
+- Python 3.8+, a CatsAPI key, and network access to CatsAPI and result download URLs in the environment where the agent actually executes commands.
+- Permission to read input media, execute scripts, and write output files, subject to the host's trust, sandbox, and approval rules. Read-only or chat-only modes cannot run generation directly.
+- Host-appropriate delivery through attachments, media previews, or file links. Without image-viewing capabilities, an agent must not claim visual verification.
+
 ## Supported Models
 
 | Type | Model key | Name |
@@ -31,7 +58,9 @@ The repository root is the Skill root, with [SKILL.md](SKILL.md) as its entry po
 git clone https://github.com/maodeyu180/CatsAPI-Agent-Skill.git catsapi
 ```
 
-In OpenClaw, you can also ask the assistant to install `catsapi` from this repository. A Git submodule in the main-site repository is not required.
+Place the complete directory in a location from the table, or use the host's official installer or directory-linking feature, then confirm that `catsapi` is discovered and enabled. Project-level Hermes installations also require trusting the project as described in its documentation. A Git submodule in the main-site repository is not required.
+
+Cross-host note: the entry point retains OpenClaw's `metadata.openclaw` and `{baseDir}` notation. `{baseDir}` means the absolute directory containing `SKILL.md`, not a shell variable. If the host does not expand it, replace the placeholder in commands with the real directory and quote paths containing spaces. If a host strictly rejects nested OpenClaw metadata, remove that optional entry only from the installed copy; the CLI does not depend on it. No generation logic changes are needed, and you should not change the working directory just to run the script.
 
 The CLI requires Python 3.8+ and no third-party packages. Create a key in your CatsAPI account and ensure you have sufficient balance. Do not paste the full key into chat. Use environment variables or a private local configuration file; see [key setup](references/api-key-setup.md).
 

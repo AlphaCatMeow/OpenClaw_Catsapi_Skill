@@ -4,6 +4,33 @@
 
 让支持 Agent Skills 的助手通过 [CatsAPI / 猫影工坊](https://catsapi.com) 生成、编辑图片和生成视频。Skill 负责理解意图和交付，Python CLI 负责参数校验、费用预览、任务提交与恢复。
 
+## 适用的 Agents
+
+这不是 OpenClaw 专用插件。项目采用 [Agent Skills](https://agentskills.io/home) 的 `SKILL.md` + 脚本/参考文件结构，面向能够读取技能、执行 Python 并访问网络的 Agent；不绑定宿主使用的某个大模型。
+
+以下 Agent 均有官方 Skill 支持，可作为接入目标。**列表确认的是宿主能力与安装目录，不代表本项目已在所有客户端、版本和运行环境中完成端到端实测。** 官方文档核对日期：2026-08-31；点击 Agent 名称查看安装细节。
+
+| Agent | 项目 / 工作区安装目录 | 用户级安装目录 |
+| --- | --- | --- |
+| [Hermes Agent](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills/) | `.hermes/skills/catsapi/`（需信任项目） | `~/.hermes/skills/catsapi/` |
+| [OpenClaw](https://docs.openclaw.ai/tools/skills) | `<workspace>/skills/catsapi/` | `~/.openclaw/skills/catsapi/` |
+| [Claude Code](https://code.claude.com/docs/en/skills) | `.claude/skills/catsapi/` | `~/.claude/skills/catsapi/` |
+| [Codex（CLI / IDE / 桌面本地任务）](https://developers.openai.com/codex/skills/) | `.agents/skills/catsapi/` | `~/.agents/skills/catsapi/` |
+| [Cursor Agent](https://cursor.com/docs/skills) | `.cursor/skills/catsapi/` | `~/.cursor/skills/catsapi/` |
+| [Gemini CLI](https://geminicli.com/docs/cli/skills/) | `.gemini/skills/catsapi/` | `~/.gemini/skills/catsapi/` |
+| [OpenCode](https://opencode.ai/docs/skills/) | `.opencode/skills/catsapi/` | `~/.config/opencode/skills/catsapi/` |
+| [GitHub Copilot（CLI / IDE Agent 模式）](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills) | `.github/skills/catsapi/` | `~/.copilot/skills/catsapi/` |
+| [Cline](https://docs.cline.bot/customization/skills) | `.cline/skills/catsapi/` | `~/.cline/skills/catsapi/` |
+| [Windsurf / Devin Desktop（Cascade）](https://docs.devin.ai/desktop/cascade/skills) | `.windsurf/skills/catsapi/` | `~/.codeium/windsurf/skills/catsapi/` |
+
+表中是常用目录，不是完整搜索路径；自定义 profile、远程机器和容器以宿主配置为准。保留安装目录名 `catsapi`，与 `SKILL.md` 的 `name` 一致。应安装完整仓库，不能只复制 `SKILL.md`，否则会缺少脚本、模型快照或参考文档。
+
+其他支持 Agent Skills 的 Agent 理论上也可接入；没有原生 Skill 加载器的 Agent，可以手动读取入口并调用 CLI，但需要自行关联目录和触发规则。完整运行还要求：
+
+- 在 Agent 实际执行命令的环境中提供 Python 3.8+、CatsAPI Key，以及访问 CatsAPI 和结果下载地址的网络权限。
+- 允许读取输入素材、执行脚本并写入输出文件；遵守宿主的信任、沙箱和审批规则。只读或纯聊天模式不能直接完成生成流程。
+- 按宿主能力交付附件、媒体预览或文件链接；没有图像查看能力时不能声称做过视觉验收。
+
 ## 支持模型
 
 | 类型 | 模型 key | 名称 |
@@ -31,7 +58,9 @@
 git clone https://github.com/maodeyu180/CatsAPI-Agent-Skill.git catsapi
 ```
 
-在 OpenClaw 中也可以要求助手从上述仓库安装 `catsapi`。使用时不需要把它作为主站的 Git submodule。
+将完整目录放到上表对应位置，或使用宿主官方的安装 / 目录关联功能，然后确认 `catsapi` 已被发现并启用。Hermes 的项目级安装还需要按官方文档信任该项目。使用时不需要把它作为主站的 Git submodule。
+
+跨宿主注意：当前入口保留了 OpenClaw 的 `metadata.openclaw` 和 `{baseDir}` 写法。`{baseDir}` 指包含 `SKILL.md` 的绝对目录，不是 shell 变量；宿主不会自动展开时，先将命令中的占位符替换成实际目录，路径含空格时加引号。若宿主严格拒绝嵌套的 OpenClaw metadata，可仅在安装副本中移除这一可选项；CLI 不依赖它。无需更改生成逻辑，也不要为了执行脚本切换工作目录。
 
 CLI 要求 Python 3.8+，仅用标准库。通过 CatsAPI 账户创建 API Key，并确保余额足够；不要把完整 Key 发到聊天中。配置环境变量或本地私密配置文件，详见 [密钥指南](references/api-key-setup.md)。
 
