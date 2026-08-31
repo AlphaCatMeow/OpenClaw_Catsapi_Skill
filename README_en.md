@@ -1,121 +1,125 @@
-# CatsAPI Skill — OpenClaw Skill for CatsAPI (猫影工坊)
+# CatsAPI Skill
 
-[中文](./README.md)
+[中文](README.md)
 
-An **Agent Skills**-standard skill pack that lets AI assistants in OpenClaw / Cursor / Claude Code / Codex CLI directly call [CatsAPI (catsapi.com)](https://catsapi.com) for image and video generation.
+Generate and edit images, and generate videos through [CatsAPI](https://catsapi.com) in Agent Skills-compatible hosts. The Skill handles intent and delivery; a standard-library Python CLI validates parameters, previews cost, submits tasks, and resumes existing ones.
 
-This version intentionally keeps a compact supported model set:
+## Supported Models
 
-| Category | Count | Examples |
-|---|---:|---|
-| Image generation | 5 | GPT Image 2, Nano Banana 2, Nano Banana Pro, FLUX.2 Pro, GrokImage |
-| Video generation | 2 | Seedance 2.0, GrokImageVideo |
+| Type | Model key | Name |
+| --- | --- | --- |
+| Image | `gptImage2` | GPT Image 2 |
+| Image | `nanoBanana2` | Nano Banana 2 |
+| Image | `nanoBananaPro` | Nano Banana Pro |
+| Image | `flux2Pro` | FLUX.2 Pro |
+| Image | `grokImagineImage` | GrokImage |
+| Image | `seedream5Lite` | Seedream 5 Lite |
+| Image | `seedream5Pro` | Seedream 5 Pro |
+| Image | `grokImagineImage2` | Grok Imagine Image 2 |
+| Video | `seedance20` | Seedance 2.0 |
+| Video | `grokImagineVideo` | GrokImageVideo |
+| Video | `seedance20Mini` | Seedance 2.0 Mini |
+| Video | `geminiOmniFlash` | Gemini Omni Flash |
 
-## Quick Start
+8 image and 4 video models. Display names also work, for example `--model "Seedance 2.0 Mini"`. Client support does not guarantee live availability; use `--list` to check the service.
 
-### OpenClaw
+## Installation and Configuration
 
-Just tell OpenClaw:
-
-> Install the catsapi skill from <https://github.com/maodeyu180/OpenClaw_Catsapi_Skill>
-
-### Cursor / Claude Code
+The repository root is the Skill root, with [SKILL.md](SKILL.md) as its entry point. Clone into a Skill directory supported by your host and enable it there, or keep a standalone checkout and register that directory with your host:
 
 ```bash
-git clone https://github.com/maodeyu180/OpenClaw_Catsapi_Skill.git ~/.cursor/skills/catsapi
+git clone https://github.com/maodeyu180/OpenClaw_Catsapi_Skill.git catsapi
 ```
 
-### As a git submodule
+In OpenClaw, you can also ask the assistant to install `catsapi` from this repository. A Git submodule in the main-site repository is not required.
 
-```bash
-cd your-project/
-git submodule add https://github.com/maodeyu180/OpenClaw_Catsapi_Skill.git .cursor/skills/catsapi
-git commit -m "Add catsapi skill"
-```
-
-## Prerequisites
-
-- **Python 3.8+** (stdlib only, no third-party deps)
-- **API Key** — create one at [catsapi.com](https://catsapi.com) → API Key page, format is `cats-xxxxxxxx`
-- **Coin balance** — via redemption codes or new-user bonus
-
-## Configuration
+The CLI requires Python 3.8+ and no third-party packages. Create a key in your CatsAPI account and ensure you have sufficient balance. Do not paste the full key into chat. Use environment variables or a private local configuration file; see [key setup](references/api-key-setup.md).
 
 ```bash
 export CATSAPI_API_KEY=cats-your-key
-# For self-hosted deployments
+# Override only for self-hosted deployments; default is https://catsapi.com
 export CATSAPI_BASE=http://localhost:8000
-```
 
-Self-check:
-
-```bash
 python3 scripts/catsapi.py --check
 ```
 
-## CLI Usage
+## Agent Workflow
+
+Describe your request naturally:
+
+- “Use Seedream 5 Pro to change this product photo to a white background; keep everything else.”
+- “Quote a 6-second portrait video with Gemini Omni Flash. Do not generate it yet.”
+- “Generate two square images with Grok Imagine Image 2, within the quote I approve.”
+- “The previous task timed out. Resume that task; do not generate again.”
+
+The assistant distinguishes queries, generation, editing, and recovery. It does not force a model menu, alter text you asked to preserve, or silently upgrade resolution. It validates parameters and checks a live quote before generation. Batch, video, or significant cost upgrades need an agreed budget.
+
+Every submission checks a fresh quote, balance, and `--max-coins`. This is a pre-submit guard, **not an atomic server-side price lock**; 0 means no cap. After a timeout, disconnect, or download failure, retain the task ID and use `--resume`, not another generation request.
+
+## CLI Examples
+
+These queries and previews do not create paid generation tasks. `--cost` uses the network; offline commands do not read credentials:
 
 ```bash
-# Text-to-image
+python3 scripts/catsapi.py --list --type image --offline
+python3 scripts/catsapi.py --info geminiOmniFlash --type video --offline
+
 python3 scripts/catsapi.py --generate --type image \
-  --model nanoBananaPro --prompt "an orange cat wearing sunglasses by the sea" \
-  --param resolution=2K --param aspectRatio=16:9 -o /tmp/cat.png
+  --model seedream5Lite --prompt "an orange cat by a window" \
+  --param imageSize=landscape_16_9 --locale en --dry-run
 
-# Text-to-video
+python3 scripts/catsapi.py --cost --type video \
+  --model seedance20Mini --resolution 720p --duration 6
+```
+
+`--dry-run` checks parameters and counts, but not media contents or live availability; it writes no files. For real generation, remove it and set an accepted spending cap:
+
+```bash
+# Replace N with the user's approved coin limit; this submits a paid task
 python3 scripts/catsapi.py --generate --type video \
-  --model seedance20 --prompt "a cat walking through a garden" \
-  --param resolution=720p --param duration=5 --param aspectRatio=16:9 \
-  -o /tmp/cat.mp4
+  --model geminiOmniFlash --prompt "an orange cat walking through a garden" \
+  --duration 6 --param aspectRatio=9:16 --locale en \
+  --max-coins N --no-wait --json
 
-# Cost preview
-python3 scripts/catsapi.py --cost --type video --model seedance20 \
-  --resolution 720p --duration 10
-
-# List enabled models
-python3 scripts/catsapi.py --list --type image
+# Resume using the returned ID; this never creates another task
+python3 scripts/catsapi.py --resume TASK_ID --json
 ```
 
-## Usage via Agent
+Downloads default to `catsapi-output/` under the current working directory. Set a filename with `-o`; existing files receive numbered alternatives instead of being overwritten. Hosts deliver results through native attachments, media previews, or local file links, without requiring a specific `message` tool.
 
-After installing the skill, just talk to the agent naturally:
+See the [CLI reference](references/cli-reference.md) for flags, JSON events, and recovery.
 
-- _"Draw me a puppy playing in the park"_
-- _"Turn this image into a video"_
-- _"Generate a 4K vertical poster with Nano Banana Pro"_
-- _"How many coins do I have?"_
-- _"How much would a 10s 720p Seedance 2.0 video cost?"_
+## Parameters and Input Limits
 
-The agent infers common parameters such as landscape/portrait/square, 4K, 720p, and 5s/10s from the user's wording, then calls the script with parameters supported by the selected model.
+- GPT Image 2: 20 sizes and up to 16 reference images. Nano Banana 2: up to 14. Nano Banana 2 / Pro enable web search by default; disable it with `--param enableWebSearch=false`.
+- Seedream 5 Lite / Pro: `imageSize`, up to 4 references, optional numeric `seed`. No independent `resolution`, `quality`, or `aspectRatio` fields.
+- Grok Imagine Image 2: `aspectRatio` and one reference image. It is distinct from GrokImage.
+- Seedance 2.0 / Mini: reference mode, 480p, 8 seconds by default. Mini has no `mode`; do not pass `fast`.
+- Both Seedance models merge start → references → end, with at most 4 images total. These are references, not guaranteed first/last frames. The schema lists 9, but the main-site worker currently keeps only 4, so the CLI enforces the effective limit.
+- Gemini Omni Flash: 5–10 seconds, 16:9 / 9:16, optional single start image. No resolution or quality controls.
+- Image inputs must be JPG / PNG / WEBP, at most 10 MB each. This CLI does not expose video or audio reference inputs.
 
-## Project Structure
+See [image models](references/image-models.md), [video models](references/video-models.md), and [parameter inference](references/parameter-inference.md).
 
-```
-.
-├── README.md / README_en.md
-├── LICENSE                         # Apache-2.0
-├── SKILL.md
-├── scripts/
-│   ├── catsapi.py
-│   └── build_capabilities.py
-├── references/
-│   ├── api-key-setup.md
-│   ├── video-models.md
-│   ├── image-models.md
-│   └── output-delivery.md
-└── data/
-    └── capabilities.json
+## Maintenance and Validation
+
+`scripts/model_catalog.py` is the central allowlist and alias registry. Rebuild the capability snapshot from the main site instead of maintaining another price table:
+
+```bash
+python3 scripts/build_capabilities.py \
+  --image-models /path/to/backend/app/image_models.json \
+  --video-models /path/to/backend/app/abacus_video_models.json \
+  -o data/capabilities.json
 ```
 
-> Note: this repo uses a **flat layout** — the repo root IS the skill root,
-> `SKILL.md` sits at the top level. Cloning to `~/.cursor/skills/catsapi/`
-> (or adding as a submodule at that path) makes Cursor recognize it directly.
+Alternatively, use `--from-api https://catsapi.com -o data/capabilities.json` to read the public live schema. Use a fresh `--cost` response for pricing.
 
-## License
+Run `python -m unittest discover -s tests -v` in a project Python environment. Tests mock media and networking and cover model support, request parameters, spending guards, offline validation, recovery, and delivery. They do not read real keys or create paid tasks, and do not replace live model-output testing.
 
-Apache License 2.0 — see [LICENSE](./LICENSE).
+See the [design notes](docs/skill-design.md) for the workflow references and tradeoffs. The repository separates the entry point (`SKILL.md`), detailed guidance (`references/`), implementation (`scripts/`), snapshot (`data/`), and offline tests (`tests/`).
 
-## Related
+## Related Projects and License
 
-- [catsapi.com](https://catsapi.com)
-- [Cursor Agent Skills docs](https://cursor.com/docs/skills)
-- [Agent Skills open standard](https://agentskills.io)
+- [CatsAPI main site](https://catsapi.com)
+- [ComfyUI_Catsapi](https://github.com/maodeyu180/ComfyUI_Catsapi) — ComfyUI nodes for the same service
+- [Apache License 2.0](LICENSE)

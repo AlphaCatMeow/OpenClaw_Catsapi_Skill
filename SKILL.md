@@ -1,144 +1,69 @@
 ---
 name: catsapi
-description: "Generate images and videos through CatsAPI (猫影工坊) — image generation is limited to GPT Image 2, Nano Banana 2, Nano Banana Pro, FLUX.2 Pro, and GrokImage; video generation is limited to Seedance 2.0 and GrokImageVideo. Use when the user wants to draw, generate pictures, generate videos, text-to-image, image-to-video, or mentions 猫影工坊 / catsapi / cats-xxxxx API key."
-homepage: https://catsapi.com
-metadata:
- {
- "openclaw":
- {
- "emoji": "🐱",
- "requires": { "bins": ["python3"] },
- "primaryEnv": "CATSAPI_API_KEY"
- }
- }
+description: "Create or edit images and generate videos through CatsAPI. Use for CatsAPI creative requests, model/parameter discovery, cost or balance checks, and recovering existing generation tasks. Respect an explicitly chosen different provider; do not route unrelated image analysis or repository maintenance into generation."
+metadata: {"openclaw":{"emoji":"🐱","homepage":"https://catsapi.com","requires":{"bins":["python3"]},"primaryEnv":"CATSAPI_API_KEY"}}
 ---
 
-# CatsAPI Skill — 猫影工坊生图生视频
+# CatsAPI 创作助手
 
-Main Script: `python3 {baseDir}/scripts/catsapi.py`
-Data: `{baseDir}/data/capabilities.json`
+入口：`python3 {baseDir}/scripts/catsapi.py`。只依赖 Python 标准库。
+支持 8 个图片模型、4 个视频模型；完整参数在 `data/capabilities.json`。CLI 负责校验与调用，宿主 Agent 负责理解需求与选择模型，不额外调用 LLM。
 
-## Persona
+使用用户当前语言，简洁说明结果。可以友好，但不强制喵系口吻、中文、固定话术或交付后的追问。
 
-你是 **猫影工坊小助手** —— 一位温柔又专业的视觉创作伙伴,喵系风格浓厚。所有回复必须遵守:
+英文会话请求传 `--locale en`，中文传 `--locale zh`；不要因界面语言变化而擅自翻译用户的提示词或图片文字。
 
-- 讲中文,语气活泼温暖:"搞定啦喵～"、"来啦～"、"超棒的!"
-- 提到成本时自然地说:"花了 X 猫币"(不要写 "Cost: X" 这种硬邦邦的)
-- 不要跟用户提 `model_key`(如 `nanoBananaPro`),要用中文名("Nano Banana Pro / 香蕉 Pro")
-- 图/视频交付后,主动问下一步:"要不要把它做成视频?"、"要不要放大到 4K?"
+## 先分清用户要什么
 
-## 输出卫生
+- 只问模型、参数、费用、余额或状态：只查询，不创建生成任务。
+- 要生成：明确图片/视频、数量、输入素材、必须保留的文字/主体、画幅及预算；已给出的信息不要再问。
+- 要编辑：先用宿主可用能力查看用户指定的图片，保留未要求更改的主体、构图、文字和风格。没有素材时不要假装已经看到。
+- 要续做：找已有任务 ID 或已交付文件。超时、断线、下载失败都不意味着需要重新生成。
+- 用户点名模型时按支持名单使用；未点名时按对应模型指南选一个默认，不先弹完整菜单。只有用户要比较/选择，或缺失信息会改变结果时才询问。
 
-- **不要把内部推理、模型选择过程、自我纠错、工具调用计划、重试原因、stderr 日志、命令细节发给用户**。禁止出现类似"用户描述没有指定模型..."、"不对..."、"重跑..."这类过程文字。
-- **不要展示、转述或暗示 API Key 的真实内容、占位符、截断形式或修复过程**。Key 配置有问题时只说:"API Key 配置好像有问题,需要重新配置一下。"
-- 用户可见消息只保留必要内容:开始生成提示、需要用户确认的问题、生成完成与成本、交付后的简短下一步建议。
-- 如果自动选择模型,只在最终消息里自然说明"这次用的是 Nano Banana Pro"等结果,不要解释完整决策链。
+## 按需读取
 
-## CRITICAL RULES
+| 需要解决的问题 | 读取 |
+| --- | --- |
+| 选图片模型、图片参考限制 | [image-models.md](references/image-models.md) |
+| 选视频模型、起始帧/参考图差异 | [video-models.md](references/video-models.md) |
+| 从自然语言推断画幅、参数和编辑约束 | [parameter-inference.md](references/parameter-inference.md) |
+| 命令细节、离线预检、费用、异步/恢复、JSON | [cli-reference.md](references/cli-reference.md) |
+| 第一次配 Key 或鉴权失败 | [api-key-setup.md](references/api-key-setup.md) |
+| 媒体交付、超时/下载失败、错误处理 | [output-delivery.md](references/output-delivery.md) |
 
-1. **永远走脚本**,不要直接 `curl` CatsAPI。所有生成/查询都通过 `scripts/catsapi.py`。
-2. **输出路径** 统一用 `/tmp/openclaw/catsapi-output/`,文件名带时间戳(脚本 `-o` 参数会自动建目录)。
-3. **交付走 `message` 工具**,不要以文本形式打印文件路径或 `![](url)` markdown。
-4. **不要展示 catsapi.com 内部 URL**(例如 `https://catsapi.com/uploads/...`),用户打不开。
-5. **永远报告成本**:脚本会输出 `COST:N` 行,把它自然地说出来:"花了 N 猫币"。
-6. **图/视频生成前必须先读对应 reference 文件**。如果用户明确点名支持模型,直接使用;如果用户没有点名模型,按 reference 的默认推荐自动选择。只有用户要求"让我选/有哪些模型/换个模型"或意图确实不明确时,才展示精简菜单。
-7. **生成前先读 `{baseDir}/references/parameter-inference.md`**,用 AI 从用户描述中推断分辨率、画幅、时长、质量等参数。能推断且合法就直接填入;只有用户描述互相冲突、参数不被所选模型支持、或会显著影响成本时才追问。
-8. **慢任务(视频)执行前**,先 `message` 通知用户:"开始生成啦,视频一般要 1-5 分钟,请稍等～🎬",然后再 `exec` 脚本。
+不需要为每次简单查询读取所有文件。明确模型后用 `--info MODEL --type image|video --offline` 获取该模型的精简 schema；只有需要核对线上可用性或最新参数时才去掉 `--offline`。
 
-## API Key 配置
+## 创作流程
 
-首次使用或 `--check` 报 401 时 → 读 `{baseDir}/references/api-key-setup.md` 按里面流程引导用户。
+1. **拟定请求。** 尊重指定模型、原始提示词、准确文字、输入图片和数量。不擅自加图、切换模型、提高分辨率或重写用户要求原样使用的提示词。默认 `rewritePrompt=false`。
+2. **预检。** 新组合或复杂参数先用 `--generate ... --dry-run`。它只检查参数/数量，不读取 Key、不联网、不编码图片、不写文件；不代表媒体内容或线上可用性已验证。枚举和类型由脚本校验，不猜字段。
+3. **核对花费。** 用相同模型/参数/数量执行 `--cost`，读取实际返回值，不引用文档旧价格。告诉用户总价。已有明确生成授权且在已知预算内时可继续；批量、视频、明显升级成本而预算不明时先确认花费上限。不能把“看看多少钱”当成生成授权。
+4. **只提交一次。** `--generate ... --max-coins N` 会再次预估并阻止超限/余额不足的请求；N 用用户允许的上限，没有更宽预算时用本次已接受报价。此保护是提交前检查，不是服务端原子锁价。
+5. **等待或恢复。** 短任务可直接等待。长任务用 `--no-wait --json` 拿到任务 ID，再用 `--resume TASK_ID --json` 等待和下载。保存任务 ID；恢复命令不会创建新任务。遇到未知提交结果，不自动重试 POST，先查网页任务记录。
+6. **检查并交付。** 检查文件存在、数量和可查看的视觉结果；明确说明不能保证的部分。报告实际成本，交付所有文件。不要为弥补输出质量或数量不足自动发起额外付费任务。
 
-不要让用户把 Key 发到聊天里,也不要把 Key 内联写进命令。脚本会优先读取环境变量 `CATSAPI_API_KEY`,如果 OpenClaw 子进程没有继承环境变量,还会尝试从本地 `.env`、`~/.catsapi.env`、`~/.zshrc`、`~/.bashrc`、`~/.profile`、`~/.bash_profile` 里静态解析 `CATSAPI_API_KEY=...`。只用 `--check` 判断是否配置成功。
-
-快速自检:
-
-```bash
-python3 {baseDir}/scripts/catsapi.py --check
-```
-
-## 路由表
-
-| 用户意图 | 做什么 |
-|---|---|
-| **文生图 / "画个..." / "生成一张..."** | **⚠️ 先读 `{baseDir}/references/image-models.md`**,用户未指定模型时按默认推荐自动选择;用户要求选择时才呈现 5 选 1 菜单 |
-| **图生图 / 图片编辑 / "把这张图..."** | **⚠️ 先读 `{baseDir}/references/image-models.md`**,只使用同一组 5 个图片模型的 `imagePrompt` 能力 |
-| **文生视频 / 图生视频 / "做成视频"** | **⚠️ 先读 `{baseDir}/references/video-models.md`**,用户未指定模型时按默认推荐自动选择;用户要求选择时才呈现 2 选 1 菜单 |
-| **图片 4K / 高清** | 用支持 4K/大尺寸的图片模型参数,如 `gptImage2 size=3840x2160` 或 `nanoBananaPro resolution=4K`;不调用独立放大模型 |
-| **视频高清** | 仅在 Seedance 2.0 / GrokImageVideo 的合法 `resolution` 范围内选择,不调用独立放大模型 |
-| **费用预览 / "这个要多少钱"** | `--cost --model X --type image/video --resolution ... --duration ...`(详见下方"费用预览"段) |
-| **任务状态 / "好了吗"** | `--status TASK_ID` |
-| **余额查询 / "我还有多少猫币"** | `--check`,输出 `{"balance": N}` |
-
-## 脚本用法
-
-**生成类任务的标准流程:**
-
-1. (视频/Topaz 等慢任务) 先 `message` 发"开始生成啦,请稍等～"
-2. `exec` 脚本,脚本会自动提交 + 轮询 + 下载
-3. 读取 `COST:N` + `OUTPUT_FILE:PATH` 行
-4. 用 `message` 工具把文件送给用户,然后回复 `NO_REPLY`(或简短跟进)
-
-**基本命令:**
+## 常用入口
 
 ```bash
-# 文生图
+# 只查本地支持的模型，不需要 Key
+python3 {baseDir}/scripts/catsapi.py --list --type image --offline
+
+# 只预检，不付费；Seedream 用 imageSize，不是 aspectRatio
 python3 {baseDir}/scripts/catsapi.py --generate --type image \
-  --model nanoBananaPro --prompt "一只戴墨镜的橘猫在海边" \
-  --param resolution=2K --num 1 \
-  -o /tmp/openclaw/catsapi-output/cat_$(date +%s).png
+  --model seedream5Lite --prompt "窗边的一只橘猫" \
+  --param imageSize=landscape_16_9 --dry-run
 
-# 文生视频
-python3 {baseDir}/scripts/catsapi.py --generate --type video \
-  --model seedance20 --prompt "a cat walking through a garden" \
-  --param resolution=720p --param duration=5 --param aspectRatio=16:9 \
-  -o /tmp/openclaw/catsapi-output/cat_$(date +%s).mp4
-
-# 图生视频(需要起始帧)
-python3 {baseDir}/scripts/catsapi.py --generate --type video \
-  --model seedance20 --prompt "让小猫慢慢转过头" \
-  --start-frame /path/to/input.png \
-  --param resolution=720p --param duration=5 \
-  -o /tmp/openclaw/catsapi-output/turn_$(date +%s).mp4
+# 查已有任务 / 恢复等待与下载；都不会重新生成
+python3 {baseDir}/scripts/catsapi.py --status TASK_ID
+python3 {baseDir}/scripts/catsapi.py --resume TASK_ID --json
 ```
 
-**探索/辅助命令:**
+## 不可忽略的边界
 
-```bash
-python3 {baseDir}/scripts/catsapi.py --check                      # 验 Key + 余额
-python3 {baseDir}/scripts/catsapi.py --list --type image          # 看所有启用的图模型
-python3 {baseDir}/scripts/catsapi.py --info nanoBananaPro --type image   # 看支持模型的参数
-python3 {baseDir}/scripts/catsapi.py --status TASK_ID             # 查任务
-```
-
-## 费用预览
-
-下单前想让用户知道价格时:
-
-```bash
-python3 {baseDir}/scripts/catsapi.py --cost \
-  --type video --model seedance20 \
-  --resolution 720p --duration 10 --num 1
-```
-
-返回形如 `{"unit_cost":6,"total_cost":6,"balance":120,"sufficient":true}`,
-如果 `sufficient=false` 要友好地提示"哎呀,余额不够啦,差 X 猫币,去兑换下吗?"。
-
-## 输出交付
-
-- 有媒体文件时 → **必须**调 `message` 工具把 `/tmp/openclaw/catsapi-output/...` 的文件送过去,然后回复 `NO_REPLY` 或一句话跟进。
-- `message` 失败时重试一次;再失败就在正文里写 `OUTPUT_FILE:PATH` 并解释。
-- 文本类结果(余额、模型列表、成本预览)直接打印出来,用自然语言包装一层。
-
-更细的错误兜底 / 分辨率冲突处理 → 读 `{baseDir}/references/output-delivery.md`。
-
-## 本地/自建部署
-
-默认请求 `https://catsapi.com`。如果用户自己跑了一套后端,让他们设:
-
-```bash
-export CATSAPI_BASE=http://localhost:8000   # 或者他们的自建域名
-export CATSAPI_API_KEY=cats-xxxxxxxx
-```
-
-脚本走 `Authorization: Bearer $CATSAPI_API_KEY`,与 catsapi.com 完全一致。
+- 两个 Seedance 都只用 `inputMode=reference`；Mini **没有** `mode`。起始图 → 参考图 → 结束图合计最多 4 张，是参考素材，不保证严格首尾帧。schema 的 9 张尚未在主站 worker 全部生效。
+- Gemini Omni Flash 只有 `duration=5..10` 和 `aspectRatio=16:9|9:16`，不要承诺或传入分辨率/质量档位。
+- 当前客户端只接收 JPG/PNG/WEBP 图片输入。虽然上游 schema 里有视频/音频字段，本客户端没有开放这些输入；不能通过 `--param` 绕过。
+- 密钥只由脚本读取环境变量/本地配置；不询问完整 Key、不把它写进聊天或命令行、不输出配置文件内容。设置问题按需读 Key 指南，不重复盘问已配置用户。
+- 默认输出到当前工作目录 `catsapi-output/`；用户指定 `-o` 时服从指定路径，已有文件不覆盖。不要为了运行脚本切到 skill 目录。
+- 交付适配宿主：有原生附件工具就用附件；支持本地媒体预览/文件链接就提供对应链接；否则给绝对路径并说明。不要假设一定有 `message`，不要固定回复 `NO_REPLY`，不要向用户暴露内部结果 URL。

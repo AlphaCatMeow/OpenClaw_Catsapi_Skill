@@ -2,6 +2,7 @@
   "source": "local-files",
   "image_models": {
     "gptImage2": {
+      "display_name": "GPT Image 2",
       "params": {
         "numImages": {
           "valueType": "string",
@@ -30,7 +31,7 @@
           "valueType": "image",
           "type": "file",
           "optional": true,
-          "maxFiles": 4
+          "maxFiles": 16
         },
         "quality": {
           "valueType": "string",
@@ -51,6 +52,8 @@
           "default": "1024x1024",
           "options": [
             "1024x1024",
+            "1280x1024",
+            "1024x1280",
             "1536x1024",
             "1024x1536",
             "2048x2048",
@@ -58,15 +61,31 @@
             "1152x2048",
             "2048x1536",
             "1536x2048",
+            "2560x1440",
+            "1440x2560",
             "3840x2160",
             "2160x3840",
+            "3824x2144",
+            "2144x3824",
             "3840x1280",
-            "1280x3840"
+            "1280x3840",
+            "2688x1152",
+            "1152x2688"
           ]
         }
+      },
+      "limits": {
+        "max_chars": 10000
+      },
+      "client_limits": {
+        "reference_images": 16,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
       }
     },
     "nanoBanana2": {
+      "display_name": "Nano Banana 2",
       "params": {
         "numImages": {
           "valueType": "string",
@@ -84,7 +103,7 @@
           "valueType": "image",
           "type": "file",
           "optional": true,
-          "maxFiles": 4
+          "maxFiles": 14
         },
         "prompt": {
           "valueType": "string",
@@ -96,6 +115,12 @@
           "type": "switch",
           "optional": true,
           "default": false
+        },
+        "enableWebSearch": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": true
         },
         "aspectRatio": {
           "valueType": "string",
@@ -123,7 +148,7 @@
           "valueType": "string",
           "type": "dropdown",
           "optional": true,
-          "default": "512px",
+          "default": "1K",
           "options": [
             "512px",
             "1K",
@@ -131,9 +156,19 @@
             "4K"
           ]
         }
+      },
+      "limits": {
+        "max_chars": 20000
+      },
+      "client_limits": {
+        "reference_images": 14,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
       }
     },
     "nanoBananaPro": {
+      "display_name": "Nano Banana Pro",
       "params": {
         "numImages": {
           "valueType": "string",
@@ -163,6 +198,12 @@
           "type": "switch",
           "optional": true,
           "default": false
+        },
+        "enableWebSearch": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": true
         },
         "aspectRatio": {
           "valueType": "string",
@@ -193,9 +234,184 @@
             "4K"
           ]
         }
+      },
+      "limits": {
+        "max_chars": 20000
+      },
+      "client_limits": {
+        "reference_images": 4,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
+      }
+    },
+    "flux2Pro": {
+      "display_name": "FLUX.2 Pro",
+      "params": {
+        "imagePrompt": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true,
+          "maxFiles": 3
+        },
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "rewritePrompt": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
+        "aspectRatio": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "square",
+          "options": [
+            "square",
+            "portrait_4_3",
+            "portrait_16_9",
+            "landscape_4_3",
+            "landscape_16_9"
+          ]
+        },
+        "seed": {
+          "valueType": "number",
+          "type": "number",
+          "optional": true
+        }
+      },
+      "limits": {},
+      "client_limits": {
+        "reference_images": 3,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
+      }
+    },
+    "seedream5Lite": {
+      "display_name": "Seedream 5 Lite",
+      "params": {
+        "numImages": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "imagePrompt": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true,
+          "maxFiles": 4
+        },
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "rewritePrompt": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
+        "imageSize": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "square",
+          "options": [
+            "square",
+            "portrait_4_3",
+            "landscape_4_3",
+            "portrait_16_9",
+            "landscape_16_9"
+          ]
+        },
+        "seed": {
+          "valueType": "number",
+          "type": "number",
+          "optional": true
+        }
+      },
+      "limits": {},
+      "client_limits": {
+        "reference_images": 4,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
+      }
+    },
+    "seedream5Pro": {
+      "display_name": "Seedream 5 Pro",
+      "params": {
+        "numImages": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "imagePrompt": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true,
+          "maxFiles": 4
+        },
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "rewritePrompt": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
+        "imageSize": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "square",
+          "options": [
+            "square",
+            "portrait_4_3",
+            "landscape_4_3",
+            "portrait_16_9",
+            "landscape_16_9"
+          ]
+        },
+        "seed": {
+          "valueType": "number",
+          "type": "number",
+          "optional": true
+        }
+      },
+      "limits": {},
+      "client_limits": {
+        "reference_images": 4,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
       }
     },
     "grokImagineImage": {
+      "display_name": "Grok Imagine Image",
       "params": {
         "numImages": {
           "valueType": "string",
@@ -244,100 +460,45 @@
             "1:2"
           ]
         }
+      },
+      "limits": {},
+      "client_limits": {
+        "reference_images": 1,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
       }
     },
-    "flux2Pro": {
+    "grokImagineImage2": {
+      "display_name": "Grok Imagine Image 2",
       "params": {
+        "numImages": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "rewritePrompt": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
         "imagePrompt": {
           "valueType": "image",
           "type": "file",
-          "optional": true,
-          "maxFiles": 3
-        },
-        "prompt": {
-          "valueType": "string",
-          "type": "text",
-          "optional": false
-        },
-        "rewritePrompt": {
-          "valueType": "boolean",
-          "type": "switch",
-          "optional": true,
-          "default": false
-        },
-        "aspectRatio": {
-          "valueType": "string",
-          "type": "dropdown",
-          "optional": true,
-          "default": "square",
-          "options": [
-            "square",
-            "portrait_4_3",
-            "portrait_16_9",
-            "landscape_4_3",
-            "landscape_16_9"
-          ]
-        },
-        "seed": {
-          "valueType": "number",
-          "type": "number",
           "optional": true
-        }
-      }
-    }
-  },
-  "video_models": {
-    "grokImagineVideo": {
-      "params": {
-        "prompt": {
-          "valueType": "string",
-          "type": "text",
-          "optional": false
-        },
-        "rewritePrompt": {
-          "valueType": "boolean",
-          "type": "switch",
-          "optional": true,
-          "default": false
-        },
-        "startFrame": {
-          "valueType": "image",
-          "type": "file",
-          "optional": true
-        },
-        "videoInput": {
-          "valueType": "video",
-          "type": "file",
-          "optional": true
-        },
-        "duration": {
-          "valueType": "string",
-          "type": "dropdown",
-          "optional": true,
-          "default": "5",
-          "options": [
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15"
-          ]
-        },
-        "resolution": {
-          "valueType": "string",
-          "type": "dropdown",
-          "optional": true,
-          "default": "480p",
-          "options": [
-            "480p",
-            "720p"
-          ]
         },
         "aspectRatio": {
           "valueType": "string",
@@ -346,17 +507,31 @@
           "default": "1:1",
           "options": [
             "1:1",
+            "2:1",
+            "20:9",
             "16:9",
-            "9:16",
             "4:3",
-            "3:4",
             "3:2",
-            "2:3"
+            "2:3",
+            "3:4",
+            "9:16",
+            "9:20",
+            "1:2"
           ]
         }
+      },
+      "limits": {},
+      "client_limits": {
+        "reference_images": 1,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
       }
-    },
+    }
+  },
+  "video_models": {
     "seedance20": {
+      "display_name": "Seedance 2.0",
       "params": {
         "prompt": {
           "valueType": "string",
@@ -367,9 +542,8 @@
           "valueType": "string",
           "type": "dropdown",
           "optional": true,
-          "default": "standard",
+          "default": "reference",
           "options": [
-            "standard",
             "reference"
           ]
         },
@@ -382,7 +556,7 @@
           "valueType": "image",
           "type": "file",
           "optional": true,
-          "maxFiles": 4
+          "maxFiles": 9
         },
         "referenceVideos": {
           "valueType": "video",
@@ -429,7 +603,7 @@
           "valueType": "string",
           "type": "dropdown",
           "optional": true,
-          "default": "720p",
+          "default": "480p",
           "options": [
             "480p",
             "720p"
@@ -439,7 +613,7 @@
           "valueType": "string",
           "type": "dropdown",
           "optional": true,
-          "default": "5",
+          "default": "8",
           "options": [
             "4",
             "5",
@@ -477,6 +651,267 @@
           "type": "number",
           "optional": true
         }
+      },
+      "limits": {
+        "max_chars": 2200
+      },
+      "client_limits": {
+        "reference_images": 4,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
+      }
+    },
+    "seedance20Mini": {
+      "display_name": "Seedance 2.0 Mini",
+      "params": {
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "inputMode": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "reference",
+          "options": [
+            "reference"
+          ]
+        },
+        "startFrame": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true
+        },
+        "referenceImages": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true,
+          "maxFiles": 9
+        },
+        "referenceVideos": {
+          "valueType": "video",
+          "type": "file",
+          "optional": true,
+          "maxFiles": 3
+        },
+        "referenceAudio": {
+          "valueType": "audio",
+          "type": "file",
+          "optional": true,
+          "maxFiles": 3
+        },
+        "rewritePrompt": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
+        "aspectRatio": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "16:9",
+          "options": [
+            "16:9",
+            "9:16",
+            "4:3",
+            "3:4",
+            "1:1",
+            "21:9"
+          ]
+        },
+        "resolution": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "480p",
+          "options": [
+            "480p",
+            "720p"
+          ]
+        },
+        "duration": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "8",
+          "options": [
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15"
+          ]
+        },
+        "endFrame": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true
+        },
+        "generateAudio": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": true
+        },
+        "cameraFixed": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
+        "seed": {
+          "valueType": "number",
+          "type": "number",
+          "optional": true
+        }
+      },
+      "limits": {
+        "max_chars": 2200
+      },
+      "client_limits": {
+        "reference_images": 4,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
+      }
+    },
+    "grokImagineVideo": {
+      "display_name": "Grok Imagine Video",
+      "params": {
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "rewritePrompt": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
+        "startFrame": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true
+        },
+        "videoInput": {
+          "valueType": "video",
+          "type": "file",
+          "optional": true
+        },
+        "duration": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "8",
+          "options": [
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15"
+          ]
+        },
+        "resolution": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "720p",
+          "options": [
+            "480p",
+            "720p"
+          ]
+        },
+        "aspectRatio": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1:1",
+          "options": [
+            "1:1",
+            "16:9",
+            "9:16",
+            "4:3",
+            "3:4",
+            "3:2",
+            "2:3"
+          ]
+        }
+      },
+      "limits": {},
+      "client_limits": {
+        "reference_images": 1,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
+      }
+    },
+    "geminiOmniFlash": {
+      "display_name": "Gemini Omni Flash",
+      "params": {
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "startFrame": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true
+        },
+        "rewritePrompt": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
+        "aspectRatio": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "16:9",
+          "options": [
+            "16:9",
+            "9:16"
+          ]
+        },
+        "duration": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "5",
+          "options": [
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10"
+          ]
+        }
+      },
+      "limits": {},
+      "client_limits": {
+        "reference_images": 1,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
       }
     }
   }

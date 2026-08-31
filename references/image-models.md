@@ -1,75 +1,33 @@
-# 图片生成 / 编辑 模型菜单
+# 图片模型选择
 
-## 使用本文件的硬规则
+这是客户端支持表，不是质量排名或实时价格表。用户点名时优先使用指定模型；当前共 8 个图片模型。
 
-1. 本 skill 的图片模型**只支持** GPT Image 2、Nano Banana 2、Nano Banana Pro、FLUX.2 Pro、GrokImage。
-2. 用户已经明确点名支持模型时,直接使用对应模型,不要再展示菜单。
-3. 用户没有点名模型但明确要求"生成/画一张/改图"时,按"自动选择规则"直接选模型,不要先展示菜单。
-4. 只有用户要求"让我选/有哪些模型/换个模型/不知道用哪个"或意图确实不明确时,才把下面菜单**原样**展示给用户,让他用数字选。
-5. 选定模型后,必须再读 `parameter-inference.md`,从用户描述中推断合法参数;能推断就直接填,不要为了常见画幅/尺寸反复追问。
-6. 如果用户要求独立放大、去噪、Qwen 编辑、Kling、Midjourney 等非本页模型,说明当前 CatsApiSkill 已收窄模型范围,并推荐下面最接近的支持模型。
+| 模型 | model key | 主要尺寸参数 | 最多参考图 | 输出数量 |
+| --- | --- | --- | ---: | --- |
+| GPT Image 2 | `gptImage2` | `size`、`quality` | 16 | 1–4 |
+| Nano Banana 2 | `nanoBanana2` | `resolution`、`aspectRatio` | 14 | 1–4 |
+| Nano Banana Pro | `nanoBananaPro` | `resolution`、`aspectRatio` | 4 | 1–4 |
+| FLUX.2 Pro | `flux2Pro` | `aspectRatio` 枚举 | 3 | 1 |
+| Grok Imagine Image | `grokImagineImage` | `aspectRatio` 比例字符串 | 1 | 1–4 |
+| Seedream 5 Lite | `seedream5Lite` | `imageSize` 枚举，可选数值 `seed` | 4 | 1–4 |
+| Seedream 5 Pro | `seedream5Pro` | `imageSize` 枚举，可选数值 `seed` | 4 | 1–4 |
+| Grok Imagine Image 2 | `grokImagineImage2` | `aspectRatio` 比例字符串 | 1 | 1–4 |
 
-## 自动选择规则
+参考图用重复的 `--image PATH`，不能把输出数量 `--num` 当作参考图数量。数量超限会报错，不会自动拆成多次付费任务。
 
-用户没指定模型时,优先按下面规则静默选择,不要把完整决策过程发给用户:
+## 用户未指定模型时
 
-| 用户描述 | 默认选择 |
-|---|---|
-| 人像、写实照片、全身照、商业图、综合质量 | Nano Banana Pro |
-| 精确文字、海报排版、复杂约束、超大尺寸 | GPT Image 2 |
-| 复杂视觉风格、质感、细节、艺术风格 | FLUX.2 Pro |
-| 省钱、快速、多张试稿、灵感探索 | Nano Banana 2 |
-| 大胆创意、抽象、夸张想象 | GrokImage |
+- 一般创作/编辑可沿用 Nano Banana Pro；没有特别需求时用 schema 的 1K 默认值，不自动提高到 2K/4K。
+- 明确文字排版、复杂约束或精确像素尺寸时，可优先考虑 GPT Image 2；是否升高 quality 由需求和费用预览决定。
+- 用户想尝试 Seedream 时，按其 Lite/Pro 选择；未分版本且在意费用时先比较实时报价，不宣称 Pro 一定更好。
+- 用户明确要 Grok Image 2 时使用 `grokImagineImage2`，不误用旧版；宽泛的“Grok”不足以确定版本且差价会影响选择时再问。
+- 参考图数量先约束模型选择。不要为迁就默认模型丢弃用户素材。
+- 用户要列举/比较时才展示相关选项；无需每次展示 8 选 1 菜单。
 
-## 通用图片菜单(文生图 / 图生图 / 图片编辑都用这份)
+## 参数提醒
 
-> 想画点什么?当前 CatsApiSkill 支持这 5 个图片模型:
->
-> 1. 🧠 **GPT Image 2** — 指令理解最好,适合复杂文字要求、海报、精确构图和超大尺寸
-> 2. ⚡ **Nano Banana 2** — 快速、便宜、可多参考图,适合批量试稿和灵感探索
-> 3. 🍌 **Nano Banana Pro** — 综合默认推荐,人像、场景、风格化都稳
-> 4. 🌈 **FLUX.2 Pro** — 细节和提示词跟随度强,适合复杂视觉风格和质感
-> 5. 🤖 **GrokImage** — 想象力强、风格大胆,适合创意/抽象题材
->
-> 选几号?(默认 3,或者直接发"1/2/3/4/5")
-
-选中后对应的 `--model` / 常用 `--param`:
-
-| # | 菜单名 | --model | 常用 --param |
-|---|---|---|---|
-| 1 | GPT Image 2 | `gptImage2` | `size=1024x1024`(默认),可 `1536x1024` / `1024x1536` / `2048x2048` / `3840x2160` 等;`quality=auto`/`low`/`medium`/`high` |
-| 2 | Nano Banana 2 | `nanoBanana2` | `resolution=512px`(主工程默认),常用 `1K` / `2K` / `4K`;`aspectRatio=16:9` 等 |
-| 3 | Nano Banana Pro | `nanoBananaPro` | `resolution=2K`(推荐) 或 `1K` / `4K`;`aspectRatio=16:9` 等 |
-| 4 | FLUX.2 Pro | `flux2Pro` | `aspectRatio=square`(默认) / `landscape_16_9` / `portrait_16_9` / `landscape_4_3` / `portrait_4_3` |
-| 5 | GrokImage | `grokImagineImage` | `aspectRatio=1:1`(默认),可 `16:9` / `9:16` / `4:3` / `3:4` / `2:1` 等 |
-
-## 带图输入时
-
-用户传了图片、要求图生图或图片编辑时,仍然只从上面 5 个模型里选:
-
-| 用户意图 | 优先模型 | 说明 |
-|---|---|---|
-| 精确改图、海报文字、复杂约束 | GPT Image 2 | 支持最多 4 张参考图 |
-| 多图参考、快速试稿 | Nano Banana 2 | 支持最多 4 张参考图 |
-| 人物/主体一致性、综合质量 | Nano Banana Pro | 默认推荐,支持最多 4 张参考图 |
-| 风格化、质感、复杂视觉 | FLUX.2 Pro | 支持最多 3 张参考图 |
-| 创意变体、夸张想象 | GrokImage | 可带图,但更偏创意重绘 |
-
-## 调用示例
-
-```bash
-# 用户选了 3 号 Nano Banana Pro,提示词"星空下的黑猫",AI 推断为横屏 2K
-python3 {baseDir}/scripts/catsapi.py --generate --type image \
-  --model nanoBananaPro --prompt "星空下的黑猫, 电影感" \
-  --param resolution=2K --param aspectRatio=16:9 --num 1 \
-  -o /tmp/openclaw/catsapi-output/cat_$(date +%s).png
-```
-
-成功后脚本会输出:
-
-```
-COST:14
-OUTPUT_FILE:/tmp/openclaw/catsapi-output/cat_1714xxxxxx.png
-```
-
-走 `message` 工具把那个文件发给用户,然后自然地跟一句:"完成啦~花了 14 猫币,要不要再出一张或者做成视频?"
+- Seedream 的横屏是 `imageSize=landscape_16_9`，竖屏是 `portrait_16_9`；不传 `resolution` 或 `aspectRatio`。
+- Grok Image 2 不开放 `resolution`、`quality` 或 `imageSize`。
+- Nano Banana 2 / Pro 的 `enableWebSearch` 默认 true，可用 `--param enableWebSearch=false` 关闭；这不改变用户原始提示词。
+- 精确默认值、全部选项和提示词限制用 `--info MODEL --type image --offline` 查。未单独配置提示词上限的模型按主站 2500 字符限制；不得直接截断用户提示词。
+- 用户要求放大时，区分重新生成大图与无损放大原图；本客户端没有独立超分辨率端点，不应承诺等价效果。

@@ -20,29 +20,26 @@ import pathlib
 import urllib.parse
 import urllib.request
 
+from model_catalog import DISPLAY_NAMES, SUPPORTED_MODELS, client_limits
+
 USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/124.0.0.0 Safari/537.36"
 )
-SUPPORTED_IMAGE_MODELS = {
-    "gptImage2",
-    "nanoBanana2",
-    "nanoBananaPro",
-    "flux2Pro",
-    "grokImagineImage",
-}
-SUPPORTED_VIDEO_MODELS = {
-    "seedance20",
-    "grokImagineVideo",
-}
+SUPPORTED_IMAGE_MODELS = SUPPORTED_MODELS["image"]
+SUPPORTED_VIDEO_MODELS = SUPPORTED_MODELS["video"]
+PROMPT_LIMIT_KEYS = (
+    "max_chars", "maxChars", "maxPromptChars", "max_prompt_chars", "promptMaxChars",
+    "max_input_tokens", "maxInputTokens", "max_input_token", "maxInputToken",
+)
 
 
 def _extract_param_schema(schema: dict) -> dict:
     """把模型参数 schema 化简为"名字→options / default"。"""
     slim: dict[str, dict] = {}
     for key, meta in schema.items():
-        if not isinstance(meta, dict):
+        if key == "_meta" or key in PROMPT_LIMIT_KEYS or not isinstance(meta, dict):
             continue
         opts = meta.get("options", {})
         if isinstance(opts, dict):
@@ -62,8 +59,22 @@ def _extract_param_schema(schema: dict) -> dict:
             item["options"] = values
         if meta.get("maxFiles"):
             item["maxFiles"] = meta["maxFiles"]
+        for limit in ("min", "max", "step"):
+            if limit in meta:
+                item[limit] = meta[limit]
         slim[key] = item
     return slim
+
+
+def _extract_limits(schema: dict) -> dict:
+    metadata = schema.get("_meta", {})
+    if not isinstance(metadata, dict):
+        metadata = {}
+    return {
+        key: schema.get(key, metadata.get(key))
+        for key in PROMPT_LIMIT_KEYS
+        if schema.get(key, metadata.get(key)) is not None
+    }
 
 
 def _build_from_files(image_path: pathlib.Path, video_path: pathlib.Path) -> dict:
@@ -78,11 +89,15 @@ def _build_from_files(image_path: pathlib.Path, video_path: pathlib.Path) -> dic
     return {
         "source": "local-files",
         "image_models": {
-            k: {"params": _extract_param_schema(v)} for k, v in image_settings.items()
+            k: {"display_name": DISPLAY_NAMES[k], "params": _extract_param_schema(v),
+                "limits": _extract_limits(v), "client_limits": client_limits(k, v)}
+            for k, v in image_settings.items()
             if k in SUPPORTED_IMAGE_MODELS
         },
         "video_models": {
-            k: {"params": _extract_param_schema(v)} for k, v in video_settings.items()
+            k: {"display_name": DISPLAY_NAMES[k], "params": _extract_param_schema(v),
+                "limits": _extract_limits(v), "client_limits": client_limits(k, v)}
+            for k, v in video_settings.items()
             if k in SUPPORTED_VIDEO_MODELS
         },
     }
@@ -107,6 +122,9 @@ def _build_from_api(base: str) -> dict:
                 "supports_image": m.get("supports_image", False),
                 "supported_aspect_ratios": m.get("supported_aspect_ratios", []),
                 "params": _extract_param_schema(m.get("params_schema", {})),
+                "client_limits": client_limits(m["model_key"], m.get("params_schema", {})),
+                "limits": {**_extract_limits(m.get("params_schema", {})),
+                           **({"max_chars": m["max_prompt_chars"]} if m.get("max_prompt_chars") else {})},
             }
             for m in img
             if m.get("model_key") in SUPPORTED_IMAGE_MODELS
@@ -118,6 +136,9 @@ def _build_from_api(base: str) -> dict:
                 "resolution_costs": m.get("resolution_costs", {}),
                 "supported_aspect_ratios": m.get("supported_aspect_ratios", []),
                 "params": _extract_param_schema(m.get("params_schema", {})),
+                "client_limits": client_limits(m["model_key"], m.get("params_schema", {})),
+                "limits": {**_extract_limits(m.get("params_schema", {})),
+                           **({"max_chars": m["max_prompt_chars"]} if m.get("max_prompt_chars") else {})},
             }
             for m in vid
             if m.get("model_key") in SUPPORTED_VIDEO_MODELS

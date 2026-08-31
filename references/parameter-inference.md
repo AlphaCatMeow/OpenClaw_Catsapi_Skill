@@ -1,94 +1,36 @@
-# 参数推断规则
+# 参数推断与提示词约束
 
-## 核心原则
+由宿主 Agent 理解自然语言，CLI 不调用额外 LLM。先用 `--info MODEL --type image|video --offline` 查看模型字段；推断后用 `--dry-run` 检查。
 
-1. 这里的"AI 推断"由宿主 Agent 完成,不是 `scripts/catsapi.py` 内置 LLM。Agent 读完本文件后,把用户自然语言转成合法 `--param key=value`。
-2. 只使用所选模型支持的参数。拿不准时用 `python3 {baseDir}/scripts/catsapi.py --info MODEL --type image/video` 查。
-3. 用户没有明确说参数时,用默认推荐值;不要为常见画幅、分辨率、时长反复追问。
-4. 用户要求的值不被模型支持时,选择最接近的合法值并说明一句。只有会明显偏离意图时才追问。
-5. 不要生成 `prompt=` 参数,提示词始终走脚本的 `--prompt`。
+## 保留用户意图
 
-## 从描述推断画幅
+- 完整提示词要求原样使用时原样传入。创意简述可整理成可执行描述，但不擅自改变主体、精确文字、身份、产品细节、画幅、数量或预算。
+- 编辑请求区分“要改什么”和“必须保持什么”；使用指定参考图，不自动搜图替代用户素材。
+- 默认 `rewritePrompt=false`。用户确实要润色/改写时才启用；它可能影响费用。
+- 参数冲突、硬性要求不支持、模型不在名单、素材缺失，或预算不足以满足要求时问一个具体问题。不静默降级，不把 16:9 改成“差不多”的 3:2。
+- 没有要求时采用 schema 默认值；不要自动加分辨率、质量、张数或时长。
 
-| 用户描述 | 标准画幅 | GPT Image 2 size | FLUX.2 Pro aspectRatio |
-|---|---|---|---|
-| 横屏、电影感、YouTube、B 站封面、电脑壁纸、16:9 | `16:9` | `1536x1024` / 高清 `2048x1152` / 4K `3840x2160` | `landscape_16_9` |
-| 竖屏、手机壁纸、短视频、抖音、Reels、小红书、9:16 | `9:16` | `1024x1536` / 高清 `1152x2048` / 4K `2160x3840` | `portrait_16_9` |
-| 方图、头像、Logo、图标、表情包、1:1 | `1:1` | `1024x1024` / 高清 `2048x2048` | `square` |
-| 海报、人物半身、竖版构图、3:4 | `3:4` | `1024x1536` | `portrait_4_3` |
-| 产品图、横版展示、4:3 | `4:3` | `1536x1024` | `landscape_4_3` |
-| 超宽、电影横幅、21:9 | `21:9` | `3840x1280` | `landscape_16_9` |
+## 画幅映射
 
-如果用户同时说"横屏"和"9:16"这类冲突信息,先追问确认。
+| 目标 | GPT Image 2 size 示例 | Seedream imageSize / FLUX aspectRatio | Nano Banana / Grok aspectRatio |
+| --- | --- | --- | --- |
+| 方图 1:1 | 1024x1024 | square | 1:1 |
+| 横屏 16:9 | 2048x1152 | landscape_16_9 | 16:9 |
+| 竖屏 9:16 | 1152x2048 | portrait_16_9 | 9:16 |
+| 横版 4:3 | 2048x1536 | landscape_4_3 | 4:3 |
+| 竖版 3:4 | 1536x2048 | portrait_4_3 | 3:4 |
 
-## 图片模型参数
+GPT 的 1536x1024 是 3:2，不是 16:9；3840x1280 是 3:1，不是 21:9。精确 21:9 可查 2688x1152。不要把此表误用成强制提高尺寸；如精确画幅需要更高尺寸，预估差价并尊重预算。
 
-### GPT Image 2 (`gptImage2`)
+## 字段差异
 
-- 使用 `size`,不要传 `resolution` 或 `aspectRatio`。
-- 默认: `size=1024x1024`, `quality=auto`, `rewritePrompt=false`。
-- 用户说"高清/精细/正式稿/商业海报": `quality=high`。
-- 用户说"草稿/省钱/快速试试": `quality=low` 或 `quality=medium`。
-- 用户说"4K/超清/壁纸":按画幅选 `3840x2160` / `2160x3840` / `2048x2048`。
-- 用户要求多图时用 `--num N`,最多 4。
+- GPT Image 2：`size` + `quality`，保留 `quality=auto`。
+- Nano Banana 2 / Pro：`resolution` + `aspectRatio`，默认 1K；联网开关是布尔值 `enableWebSearch`。
+- Seedream 5 Lite / Pro：`imageSize`，可选数值 `seed`；没有 resolution/quality 档位。
+- FLUX.2 Pro：`aspectRatio` 用 square / portrait_* / landscape_*，只输出 1 张。
+- Grok Imagine Image / Image 2：`aspectRatio` 用 16:9 等字符串，只接收 1 张参考图。
+- Seedance 2.0：reference / fast；Mini：reference 且没有 mode。两者时长 4–15 秒。
+- Gemini Omni Flash：时长 5–10 秒、16:9 / 9:16；没有 resolution/mode。
+- `--num` 控制图片输出数量；视频必须 1。不支持的数量不要自动拆单。
 
-### Nano Banana 2 (`nanoBanana2`)
-
-- 使用 `resolution` + `aspectRatio`。
-- 主工程默认: `resolution=512px`, `aspectRatio=1:1`, `rewritePrompt=false`。
-- 没有特别要求省钱/草稿时,建议用 `resolution=1K` 起步。
-- 用户说"高清/正式稿": `resolution=2K`。
-- 用户说"4K/超清/壁纸/海报": `resolution=4K`。
-- 用户说"草图/便宜/快速试试": `resolution=512px` 或 `1K`。
-- 用户要求多图时用 `--num N`,最多 4。
-
-### Nano Banana Pro (`nanoBananaPro`)
-
-- 使用 `resolution` + `aspectRatio`。
-- 主工程默认: `resolution=1K`, `aspectRatio=1:1`, `rewritePrompt=false`。
-- 没有特别要求省钱/草稿时,建议用 `resolution=2K`。
-- 用户说"省钱/快速试试": `resolution=1K`。
-- 用户说"4K/超清/最终稿/壁纸": `resolution=4K`。
-- 用户要求多图时用 `--num N`,最多 4。
-
-### FLUX.2 Pro (`flux2Pro`)
-
-- 只推断 `aspectRatio`,不要传 `resolution`。
-- 默认: `aspectRatio=square`, `rewritePrompt=false`。
-- 横屏用 `landscape_16_9`,竖屏用 `portrait_16_9`,4:3 用 `landscape_4_3`,3:4 用 `portrait_4_3`。
-- 该模型没有 `numImages` 参数时,不要强行多图;默认 `--num 1`。
-
-### GrokImage (`grokImagineImage`)
-
-- 只推断 `aspectRatio`,不要传 `resolution`。
-- 默认: `aspectRatio=1:1`, `rewritePrompt=false`。
-- 横屏用 `16:9`,竖屏用 `9:16`,方图用 `1:1`,超宽可用 `2:1` 或 `20:9`。
-- 用户要求多图时用 `--num N`,最多 4。
-
-## 视频模型参数
-
-### Seedance 2.0 (`seedance20`)
-
-- 默认: `inputMode=standard`, `resolution=720p`, `duration=5`, `aspectRatio=16:9`, `mode=fast`, `generateAudio=true`, `cameraFixed=false`, `rewritePrompt=false`。
-- 支持分辨率只有 `480p` / `720p`;用户说 1080p 或 4K 时,说明当前模型最高 720p,并用 `720p`。
-- 主工程当前 `mode` 只有 `fast`,不要生成 `mode=standard`。
-- 用户说"高质量/稳定/真人/细节/正式稿":仍用 `mode=fast`,可提高提示词细节,不要伪造不存在的质量档位。
-- 用户说"快速/省钱/先试试": `mode=fast`。
-- 时长按用户明确秒数取 `4` 到 `15` 的合法整数;没说时用 `5`。如果用户说超过 15 秒,说明最长 15 秒并用 `duration=15`。
-- 支持 `--start-frame`、`--end-frame` 和最多 4 个 `--reference-image`。带图片素材时主工程 worker 会归一成 `referenceImages`,并强制 `inputMode=reference`。
-- 主工程模型 schema 中有 `referenceVideos` / `referenceAudio`,但当前任务接口图片校验链路只接受 JPG/PNG/WEBP,CLI 不要承诺视频/音频参考素材。
-
-### GrokImageVideo (`grokImagineVideo`)
-
-- 默认: `resolution=480p`, `duration=5`, `aspectRatio=1:1`。
-- 用户说"高清/720p": `resolution=720p`。不支持 1080p/4K,遇到时说明最高 720p 并用 `720p`。
-- 时长按用户明确秒数取 `5` 到 `15` 的合法整数;没说时用 `5`。如果用户说超过 15 秒,说明最长 15 秒并用 `duration=15`。
-- 支持 `--start-frame`,不支持 `--end-frame`;用户给首尾帧时改用 Seedance 2.0 或追问。
-
-## 何时必须追问
-
-- 用户没点名模型,且无法按自动选择规则确定合适模型。
-- 用户的画幅描述互相矛盾。
-- 用户要求一个本 skill 不支持的模型,并且没有明显替代模型。
-- 用户要求首尾帧视频但指定了 GrokImageVideo。
-- 用户要求严格的不可降级参数,比如"必须 1080p 视频",但两个支持视频模型都不支持。
+所有枚举、布尔值、有限数值、模型默认值和素材数量都由脚本校验；未知参数与通过 `--param` 传文件字段会被拒绝。离线预检不检查媒体内容、线上启用状态或实时价格。
