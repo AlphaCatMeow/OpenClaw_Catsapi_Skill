@@ -30,7 +30,7 @@ class WorkflowTests(unittest.TestCase):
         return out.getvalue()
 
     def test_offline_discovery_needs_no_credentials(self):
-        for kind, count in (("image", 8), ("video", 4)):
+        for kind, count in (("image", 9), ("video", 4)):
             data = json.loads(self.run_cli("--list", "--type", kind, "--offline"))
             self.assertEqual(len(data["models"]), count)
             self.assertFalse(data["live_availability_checked"])
@@ -53,6 +53,8 @@ class WorkflowTests(unittest.TestCase):
         cases = [
             ("image", "gptImage2", ["--resolution", "2688x1152", "--mode", "high", "--num", "3"],
              {"resolution": "2688x1152", "mode": "high", "num_images": 3}),
+            ("image", "gptImage25", ["--param", "variant=sunburst", "--mode", "xhigh", "--num", "4"],
+             {"resolution": "1024x1024", "mode": "xhigh", "variant": "sunburst", "num_images": 4}),
             ("image", "seedream5Lite", ["--param", "imageSize=portrait_16_9"], {"resolution": "portrait_16_9"}),
             ("video", "seedance20Mini", ["--param", "resolution=720p", "--duration", "6"],
              {"resolution": "720p", "duration": "6"}),
@@ -81,6 +83,36 @@ class WorkflowTests(unittest.TestCase):
             with self.subTest(preview=preview), patch.object(client, "_post", return_value=preview) as post, \
                  self.assertRaises(SystemExit):
                 self.run_cli("--generate", "--model", "grokImagineImage2", "--prompt", "test", "--max-coins", "10")
+            post.assert_called_once()
+            self.assertEqual(post.call_args.args[0], "/api/tasks/cost-preview")
+
+    def test_gpt25_variant_quotes_match_submission_and_protect_budget(self):
+        references = [value for i in range(16) for value in ("--image", f"ref-{i}.png")]
+        for variant, quality, quoted_total in (("flare", "auto", 44), ("sunburst", "auto", 56),
+                                                ("sunburst", "max", 304)):
+            argv = ("--generate", "--model", "gptImage25", "--prompt", "test", "--num", "4",
+                    "--param", f"variant={variant}", "--mode", quality,
+                    "--param", "background=transparent", "--no-wait", "--json", *references)
+            with patch.object(client, "_encode_image", side_effect=lambda p: {"name": p}), \
+                 patch.object(client, "_post", side_effect=[{"total_cost": quoted_total, "sufficient": True},
+                                                           {"id": "gpt25-task"}]) as post:
+                receipt = json.loads(self.run_cli(*argv, "--max-coins", str(quoted_total)))
+            self.assertEqual([call.args[0] for call in post.call_args_list],
+                             ["/api/tasks/cost-preview", "/api/tasks"])
+            quote, request = [call.args[1] for call in post.call_args_list]
+            self.assertEqual(quote["variant"], request["params"]["variant"])
+            self.assertEqual(quote["variant"], variant)
+            self.assertEqual(quote["mode"], quality)
+            self.assertEqual(request["params"]["quality"], quality)
+            self.assertEqual(request["params"]["background"], "transparent")
+            self.assertTrue(quote["has_image_input"])
+            self.assertEqual(quote["num_images"], request["num_images"])
+            self.assertEqual(len(request["images"]), 16)
+            self.assertEqual(receipt["estimated_cost"], quoted_total)
+            with patch.object(client, "_encode_image", side_effect=lambda p: {"name": p}), \
+                 patch.object(client, "_post", return_value={"total_cost": quoted_total, "sufficient": True}) as post, \
+                 self.assertRaises(SystemExit):
+                self.run_cli(*argv, "--max-coins", str(quoted_total - 1))
             post.assert_called_once()
             self.assertEqual(post.call_args.args[0], "/api/tasks/cost-preview")
 

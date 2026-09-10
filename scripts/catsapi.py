@@ -456,7 +456,8 @@ def _cost_body(body: dict, args: argparse.Namespace) -> dict:
         "rewrite_prompt": params.get("rewritePrompt", False),
     }
     for key, fields in (("resolution", ("resolution", "size", "imageSize")),
-                        ("duration", ("duration",)), ("mode", ("mode", "quality"))):
+                        ("duration", ("duration",)), ("mode", ("mode", "quality")),
+                        ("variant", ("variant",))):
         for field in fields:
             if field in params:
                 result[key] = str(params[field])

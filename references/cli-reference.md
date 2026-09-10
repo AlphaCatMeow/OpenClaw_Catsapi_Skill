@@ -27,6 +27,11 @@ python3 {baseDir}/scripts/catsapi.py --cost --type video \
 # GPT 按尺寸 + quality 预览，不能漏掉 quality
 python3 {baseDir}/scripts/catsapi.py --cost --type image \
   --model gptImage2 --param size=2048x1152 --param quality=high --num 2
+
+# 2.5 精细变体：variant 同时用于预览和提交，透明背景属于生成参数
+python3 {baseDir}/scripts/catsapi.py --cost --type image \
+  --model gptImage25 --param variant=sunburst --mode auto \
+  --param background=transparent --resolution 1024x1024 --num 2
 ```
 
 `--resolution` 映射到当前模型支持的 resolution / size / imageSize；`--mode` 映射到 mode / quality；`--duration` 对应 duration。与 `--param` 冲突会报错；模型不支持对应字段时也会拒绝。默认值在预览和提交前用同一套逻辑解析。

@@ -7,7 +7,7 @@ metadata: {"openclaw":{"emoji":"🐱","homepage":"https://catsapi.com","requires
 # CatsAPI 创作助手
 
 入口：`python3 {baseDir}/scripts/catsapi.py`。只依赖 Python 标准库。
-支持 8 个图片模型、4 个视频模型；完整参数在 `data/capabilities.json`。CLI 负责校验与调用，宿主 Agent 负责理解需求与选择模型，不额外调用 LLM。
+支持 9 个图片模型、4 个视频模型；完整参数在 `data/capabilities.json`。CLI 负责校验与调用，宿主 Agent 负责理解需求与选择模型，不额外调用 LLM。
 
 使用用户当前语言，简洁说明结果。可以友好，但不强制喵系口吻、中文、固定话术或交付后的追问。
 
@@ -61,6 +61,7 @@ python3 {baseDir}/scripts/catsapi.py --resume TASK_ID --json
 
 ## 不可忽略的边界
 
+- GPT Image 2.5 使用 `gptImage25`，默认 `variant=flare`、`quality=auto`；Sunburst 用 `--param variant=sunburst`。预览与提交必须使用相同变体，以服务端报价保护预算，不在客户端另乘价格倍率。
 - 两个 Seedance 都只用 `inputMode=reference`；Mini **没有** `mode`。起始图 → 参考图 → 结束图合计最多 4 张，是参考素材，不保证严格首尾帧。schema 的 9 张尚未在主站 worker 全部生效。
 - Gemini Omni Flash 只有 `duration=5..10` 和 `aspectRatio=16:9|9:16`，不要承诺或传入分辨率/质量档位。
 - 当前客户端只接收 JPG/PNG/WEBP 图片输入。虽然上游 schema 里有视频/音频字段，本客户端没有开放这些输入；不能通过 `--param` 绕过。

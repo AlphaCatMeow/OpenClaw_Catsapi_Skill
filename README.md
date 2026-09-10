@@ -35,6 +35,7 @@
 
 | 类型 | 模型 key | 名称 |
 | --- | --- | --- |
+| 图片 | `gptImage25` | GPT Image 2.5 |
 | 图片 | `gptImage2` | GPT Image 2 |
 | 图片 | `nanoBanana2` | Nano Banana 2 |
 | 图片 | `nanoBananaPro` | Nano Banana Pro |
@@ -48,7 +49,7 @@
 | 视频 | `seedance20Mini` | Seedance 2.0 Mini |
 | 视频 | `geminiOmniFlash` | Gemini Omni Flash |
 
-共 8 个图片、4 个视频模型。CLI 也接受显示名，例如 `--model "Seedance 2.0 Mini"`；支持名单不等于线上当前全部可用，使用 `--list` 核对线上状态。
+共 9 个图片、4 个视频模型。CLI 也接受显示名，例如 `--model "GPT Image 2.5"`；支持名单不等于线上当前全部可用，使用 `--list` 核对线上状态。
 
 ## 安装与配置
 
@@ -119,7 +120,9 @@ python3 scripts/catsapi.py --resume TASK_ID --json
 
 ## 参数与输入边界
 
-- GPT Image 2：20 档尺寸、最多 16 张参考图；Nano Banana 2：最多 14 张。Nano Banana 2 / Pro 默认开启联网搜索，可用 `--param enableWebSearch=false` 关闭。
+- GPT Image 2 / 2.5：20 档尺寸、最多 16 张参考图。2.5 支持 1–4 张输出，默认 Flare / auto / 1024x1024；质量按 `low / auto / medium / high / xhigh / max` 排列，提示词最多 10000 字符。
+- 2.5 精细变体用 `--param variant=sunburst`，透明 PNG 用 `--param background=transparent`（也可选 auto / opaque）。Sunburst 同质量、同尺寸按 Flare 单张价的 1.25 倍四舍五入收费；CLI 向服务端传递变体查询报价并检查 `--max-coins`，不本地另乘倍率。
+- Nano Banana 2：最多 14 张参考图。Nano Banana 2 / Pro 默认开启联网搜索，可用 `--param enableWebSearch=false` 关闭。
 - Seedream 5 Lite / Pro：用 `imageSize`，最多 4 张参考图；可传数字 `seed`。不支持独立的 `resolution`、`quality` 或 `aspectRatio` 字段。
 - Grok Imagine Image 2：用 `aspectRatio`，最多 1 张参考图；与 GrokImage 是不同模型。
 - Seedance 2.0 / Mini：默认 reference / 480p / 8 秒。Mini 没有 `mode`，不能传 `fast`。

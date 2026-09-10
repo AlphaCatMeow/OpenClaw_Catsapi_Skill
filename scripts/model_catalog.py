@@ -2,6 +2,7 @@
 import re
 
 IMAGE_MODELS = {
+    "gptImage25": "GPT Image 2.5",
     "gptImage2": "GPT Image 2",
     "nanoBanana2": "Nano Banana 2",
     "nanoBananaPro": "Nano Banana Pro",

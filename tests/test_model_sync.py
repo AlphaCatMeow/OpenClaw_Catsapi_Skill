@@ -36,7 +36,7 @@ class ModelSyncTests(unittest.TestCase):
             self.body(model, *extra)
 
     def test_supported_sets_and_defaults(self):
-        self.assertEqual(len(client.SUPPORTED_MODELS["image"]), 8)
+        self.assertEqual(len(client.SUPPORTED_MODELS["image"]), 9)
         self.assertEqual(len(client.SUPPORTED_MODELS["video"]), 4)
         for kind in ("image", "video"):
             models = self.capabilities[f"{kind}_models"]
@@ -70,7 +70,7 @@ class ModelSyncTests(unittest.TestCase):
         self.assertEqual(len(sizes), 20)
         for size in ("1280x1024", "2688x1152", "3824x2144"):
             self.assertEqual(self.body("gptImage2", "--param", f"size={size}")["params"]["size"], size)
-        for model, count in (("gptImage2", 16), ("nanoBanana2", 14), ("nanoBananaPro", 4),
+        for model, count in (("gptImage25", 16), ("gptImage2", 16), ("nanoBanana2", 14), ("nanoBananaPro", 4),
                              ("flux2Pro", 3), ("grokImagineImage", 1), ("seedream5Lite", 4),
                              ("seedream5Pro", 4), ("grokImagineImage2", 1)):
             refs = [value for i in range(count) for value in ("--image", f"ref-{i}.png")]
@@ -81,6 +81,26 @@ class ModelSyncTests(unittest.TestCase):
         for model in ("nanoBanana2", "nanoBananaPro"):
             body = self.body(model, "--param", "enableWebSearch=false")
             self.assertIs(body["params"]["enableWebSearch"], False)
+
+    def test_gpt25_aliases_defaults_and_parameter_limits(self):
+        for alias in ("GPT Image 2.5", "gpt-image-2.5", "gptImage25"):
+            self.assertEqual(client._normalize_model(alias, "image"), "gptImage25")
+        self.assertEqual(self.body("gptImage25")["params"], {
+            "size": "1024x1024", "quality": "auto", "variant": "flare",
+            "background": "auto", "rewritePrompt": False,
+        })
+        capability = self.capabilities["image_models"]["gptImage25"]
+        self.assertEqual(capability["params"]["quality"]["options"],
+                         ["low", "auto", "medium", "high", "xhigh", "max"])
+        self.assertEqual(capability["client_limits"]["reference_images"], 16)
+        for size in capability["params"]["size"]["options"]:
+            for quality in capability["params"]["quality"]["options"]:
+                self.body("gptImage25", "--resolution", size, "--mode", quality)
+        self.body("gptImage25", "--prompt", "x" * 10000)
+        self.assert_rejected("gptImage25", "--prompt", "x" * 10001)
+        for param in ("variant=thinking", "background=invalid", "quality=mid", "size=auto"):
+            self.assert_rejected("gptImage25", "--param", param)
+        self.assert_rejected("gptImage25", "--num", "5")
 
     def test_seedance_reference_mode_and_legacy_input_order(self):
         body = self.body("seedance20", "--start-frame", "start.png",

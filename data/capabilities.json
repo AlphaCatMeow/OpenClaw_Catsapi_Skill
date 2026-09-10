@@ -1,6 +1,112 @@
 {
   "source": "local-files",
   "image_models": {
+    "gptImage25": {
+      "display_name": "GPT Image 2.5",
+      "params": {
+        "numImages": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "rewritePrompt": {
+          "valueType": "boolean",
+          "type": "switch",
+          "optional": true,
+          "default": false
+        },
+        "imagePrompt": {
+          "valueType": "image",
+          "type": "file",
+          "optional": true,
+          "maxFiles": 16
+        },
+        "variant": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "flare",
+          "options": [
+            "flare",
+            "sunburst"
+          ]
+        },
+        "quality": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "auto",
+          "options": [
+            "low",
+            "auto",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        "size": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1024x1024",
+          "options": [
+            "1024x1024",
+            "1280x1024",
+            "1024x1280",
+            "1536x1024",
+            "1024x1536",
+            "2048x2048",
+            "2048x1152",
+            "1152x2048",
+            "2048x1536",
+            "1536x2048",
+            "2560x1440",
+            "1440x2560",
+            "3840x2160",
+            "2160x3840",
+            "3824x2144",
+            "2144x3824",
+            "3840x1280",
+            "1280x3840",
+            "2688x1152",
+            "1152x2688"
+          ]
+        },
+        "background": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "auto",
+          "options": [
+            "auto",
+            "transparent",
+            "opaque"
+          ]
+        }
+      },
+      "limits": {
+        "max_chars": 10000
+      },
+      "client_limits": {
+        "reference_images": 16,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false
+      }
+    },
     "gptImage2": {
       "display_name": "GPT Image 2",
       "params": {
@@ -39,8 +145,8 @@
           "optional": true,
           "default": "auto",
           "options": [
-            "auto",
             "low",
+            "auto",
             "medium",
             "high"
           ]

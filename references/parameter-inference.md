@@ -12,7 +12,7 @@
 
 ## 画幅映射
 
-| 目标 | GPT Image 2 size 示例 | Seedream imageSize / FLUX aspectRatio | Nano Banana / Grok aspectRatio |
+| 目标 | GPT Image 2 / 2.5 size 示例 | Seedream imageSize / FLUX aspectRatio | Nano Banana / Grok aspectRatio |
 | --- | --- | --- | --- |
 | 方图 1:1 | 1024x1024 | square | 1:1 |
 | 横屏 16:9 | 2048x1152 | landscape_16_9 | 16:9 |
@@ -25,6 +25,7 @@ GPT 的 1536x1024 是 3:2，不是 16:9；3840x1280 是 3:1，不是 21:9。精�
 ## 字段差异
 
 - GPT Image 2：`size` + `quality`，保留 `quality=auto`。
+- GPT Image 2.5：同样用 `size` + `quality`，另有 `variant=flare|sunburst`、`background=auto|transparent|opaque`。默认 Flare / auto；只在明确要求时切 Sunburst 或提高到 `xhigh` / `max`，用同一变体重新查询报价。
 - Nano Banana 2 / Pro：`resolution` + `aspectRatio`，默认 1K；联网开关是布尔值 `enableWebSearch`。
 - Seedream 5 Lite / Pro：`imageSize`，可选数值 `seed`；没有 resolution/quality 档位。
 - FLUX.2 Pro：`aspectRatio` 用 square / portrait_* / landscape_*，只输出 1 张。

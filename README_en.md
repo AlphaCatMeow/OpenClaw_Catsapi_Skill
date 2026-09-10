@@ -35,6 +35,7 @@ Other Agent Skills-compatible agents should also be able to integrate it. Agents
 
 | Type | Model key | Name |
 | --- | --- | --- |
+| Image | `gptImage25` | GPT Image 2.5 |
 | Image | `gptImage2` | GPT Image 2 |
 | Image | `nanoBanana2` | Nano Banana 2 |
 | Image | `nanoBananaPro` | Nano Banana Pro |
@@ -48,7 +49,7 @@ Other Agent Skills-compatible agents should also be able to integrate it. Agents
 | Video | `seedance20Mini` | Seedance 2.0 Mini |
 | Video | `geminiOmniFlash` | Gemini Omni Flash |
 
-8 image and 4 video models. Display names also work, for example `--model "Seedance 2.0 Mini"`. Client support does not guarantee live availability; use `--list` to check the service.
+9 image and 4 video models. Display names also work, for example `--model "GPT Image 2.5"`. Client support does not guarantee live availability; use `--list` to check the service.
 
 ## Installation and Configuration
 
@@ -120,7 +121,9 @@ See the [CLI reference](references/cli-reference.md) for flags, JSON events, and
 
 ## Parameters and Input Limits
 
-- GPT Image 2: 20 sizes and up to 16 reference images. Nano Banana 2: up to 14. Nano Banana 2 / Pro enable web search by default; disable it with `--param enableWebSearch=false`.
+- GPT Image 2 / 2.5: 20 sizes and up to 16 reference images. 2.5 supports 1–4 outputs and defaults to Flare / auto / 1024x1024. Quality options are ordered `low / auto / medium / high / xhigh / max`; prompts allow up to 10,000 characters.
+- For 2.5, select the precise variant with `--param variant=sunburst` and transparent PNG output with `--param background=transparent` (auto / opaque are also available). At the same quality and size, CatsAPI prices Sunburst at 1.25 times Flare per image, rounded to a whole coin. The CLI sends the variant for a server quote and checks `--max-coins`; it does not apply another local multiplier.
+- Nano Banana 2 accepts up to 14 references. Nano Banana 2 / Pro enable web search by default; disable it with `--param enableWebSearch=false`.
 - Seedream 5 Lite / Pro: `imageSize`, up to 4 references, optional numeric `seed`. No independent `resolution`, `quality`, or `aspectRatio` fields.
 - Grok Imagine Image 2: `aspectRatio` and one reference image. It is distinct from GrokImage.
 - Seedance 2.0 / Mini: reference mode, 480p, 8 seconds by default. Mini has no `mode`; do not pass `fast`.
