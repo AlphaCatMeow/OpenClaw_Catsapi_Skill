@@ -2,7 +2,7 @@
 
 [English](README_en.md)
 
-让支持 Agent Skills 的助手通过 [CatsAPI / 猫影工坊](https://catsapi.com) 生成、编辑图片和生成视频。Skill 负责理解意图和交付，Python CLI 负责参数校验、费用预览、任务提交与恢复。
+让支持 Agent Skills 的助手通过 [CatsAPI / 猫图 AI](https://catsapi.com) 生成、编辑图片和生成视频。Skill 负责理解意图和交付，Python CLI 负责参数校验、费用预览、任务提交与恢复。
 
 ## 适用的 Agents
 

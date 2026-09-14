@@ -2,7 +2,7 @@
 
 [中文](README.md)
 
-Generate and edit images, and generate videos through [CatsAPI](https://catsapi.com) in Agent Skills-compatible hosts. The Skill handles intent and delivery; a standard-library Python CLI validates parameters, previews cost, submits tasks, and resumes existing ones.
+Generate and edit images, and generate videos through [CatsAPI / CatPic AI](https://catsapi.com) in Agent Skills-compatible hosts. The Skill handles intent and delivery; a standard-library Python CLI validates parameters, previews cost, submits tasks, and resumes existing ones.
 
 ## Compatible Agents
 
