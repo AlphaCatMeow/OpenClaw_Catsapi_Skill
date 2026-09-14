@@ -8,11 +8,12 @@ Generate and edit images, and generate videos through [CatsAPI](https://catsapi.
 
 This is not an OpenClaw-only plugin. The project uses the [Agent Skills](https://agentskills.io/home) structure of `SKILL.md` plus scripts and references. It targets agents that can read skills, execute Python, and access the network, regardless of which language model powers the host.
 
-The following agents document Skill support and are integration targets. **This list verifies host capabilities and installation locations, not end-to-end testing of CatsAPI on every client, version, or runtime.** Official documentation checked on 2026-08-31; follow the agent links for installation details.
+The following agents document Skill support and are integration targets. **This list verifies host capabilities and installation locations, not end-to-end testing of CatsAPI on every client, version, or runtime.** Official documentation checked on 2026-08-31 (DSH added and checked on 2026-09-14); follow the agent links for installation details.
 
 | Agent | Project / workspace location | User-level location |
 | --- | --- | --- |
 | [Hermes Agent](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills/) | `.hermes/skills/catsapi/` (requires project trust) | `~/.hermes/skills/catsapi/` |
+| [DeepSeek Harness (DSH)](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/skill/skill-filesystem/README.md) | `.dsh/skills/catsapi/` or `.agents/skills/catsapi/` | `~/.dsh/skills/catsapi/` or `~/.agents/skills/catsapi/` |
 | [OpenClaw](https://docs.openclaw.ai/tools/skills) | `<workspace>/skills/catsapi/` | `~/.openclaw/skills/catsapi/` |
 | [Claude Code](https://code.claude.com/docs/en/skills) | `.claude/skills/catsapi/` | `~/.claude/skills/catsapi/` |
 | [Codex (CLI / IDE / local desktop tasks)](https://developers.openai.com/codex/skills/) | `.agents/skills/catsapi/` | `~/.agents/skills/catsapi/` |
@@ -44,12 +45,13 @@ Other Agent Skills-compatible agents should also be able to integrate it. Agents
 | Image | `seedream5Lite` | Seedream 5 Lite |
 | Image | `seedream5Pro` | Seedream 5 Pro |
 | Image | `grokImagineImage2` | Grok Imagine Image 2 |
+| Image | `midjourney` | Midjourney |
 | Video | `seedance20` | Seedance 2.0 |
 | Video | `grokImagineVideo` | GrokImageVideo |
 | Video | `seedance20Mini` | Seedance 2.0 Mini |
 | Video | `geminiOmniFlash` | Gemini Omni Flash |
 
-9 image and 4 video models. Display names also work, for example `--model "GPT Image 2.5"`. Client support does not guarantee live availability; use `--list` to check the service.
+10 image and 4 video models. Display names also work, for example `--model "GPT Image 2.5"`. Client support does not guarantee live availability; use `--list` to check the service.
 
 ## Installation and Configuration
 
@@ -60,6 +62,8 @@ git clone https://github.com/maodeyu180/CatsAPI-Agent-Skill.git catsapi
 ```
 
 Place the complete directory in a location from the table, or use the host's official installer or directory-linking feature, then confirm that `catsapi` is discovered and enabled. Project-level Hermes installations also require trusting the project as described in its documentation. A Git submodule in the main-site repository is not required.
+
+DSH uses the nearest Git root for project-level discovery; keep `catsapi/SKILL.md` directly under a scanned skill root. Its filesystem Skill provider must be enabled, and the execution environment needs Python, shell execution, network access, and `CATSAPI_API_KEY`. If you customize `DSH_HOME`, `DSH_AGENTS_HOME`, or Skill roots, follow that configuration. DSH compatibility is based on its documented loader format; a complete CatsAPI generation workflow has not been tested in DSH.
 
 Cross-host note: the entry point retains OpenClaw's `metadata.openclaw` and `{baseDir}` notation. `{baseDir}` means the absolute directory containing `SKILL.md`, not a shell variable. If the host does not expand it, replace the placeholder in commands with the real directory and quote paths containing spaces. If a host strictly rejects nested OpenClaw metadata, remove that optional entry only from the installed copy; the CLI does not depend on it. No generation logic changes are needed, and you should not change the working directory just to run the script.
 
@@ -98,6 +102,10 @@ python3 scripts/catsapi.py --generate --type image \
   --model seedream5Lite --prompt "an orange cat by a window" \
   --param imageSize=landscape_16_9 --locale en --dry-run
 
+python3 scripts/catsapi.py --generate --type image \
+  --model Midjourney --prompt "an orange cat in watercolor --stylize 200" \
+  --param version=v7 --param aspectRatio=3:4 --mode fast --num 1 --locale en --dry-run
+
 python3 scripts/catsapi.py --cost --type video \
   --model seedance20Mini --resolution 720p --duration 6
 ```
@@ -126,6 +134,7 @@ See the [CLI reference](references/cli-reference.md) for flags, JSON events, and
 - Nano Banana 2 accepts up to 14 references. Nano Banana 2 / Pro enable web search by default; disable it with `--param enableWebSearch=false`.
 - Seedream 5 Lite / Pro: `imageSize`, up to 4 references, optional numeric `seed`. No independent `resolution`, `quality`, or `aspectRatio` fields.
 - Grok Imagine Image 2: `aspectRatio` and one reference image. It is distinct from GrokImage.
+- Midjourney: text-to-image only, default `version=v7`, `aspectRatio=1:1`, `processMode=fast`; versions `v7 / v6 / niji 6`, seven aspect ratios, and `fast / turbo / relax` processing. Use `--mode` for `processMode` and `--param negativePrompt=...` for exclusions. Each task returns 4 images and is billed once: leave `--num` at 1. No reference images, resolution/quality controls, or prompt rewriting.
 - Seedance 2.0 / Mini: reference mode, 480p, 8 seconds by default. Mini has no `mode`; do not pass `fast`.
 - Both Seedance models merge start → references → end, with at most 4 images total. These are references, not guaranteed first/last frames. The schema lists 9, but the main-site worker currently keeps only 4, so the CLI enforces the effective limit.
 - Gemini Omni Flash: 5–10 seconds, 16:9 / 9:16, optional single start image. No resolution or quality controls.

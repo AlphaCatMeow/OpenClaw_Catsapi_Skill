@@ -34,7 +34,9 @@ python3 {baseDir}/scripts/catsapi.py --cost --type image \
   --param background=transparent --resolution 1024x1024 --num 2
 ```
 
-`--resolution` 映射到当前模型支持的 resolution / size / imageSize；`--mode` 映射到 mode / quality；`--duration` 对应 duration。与 `--param` 冲突会报错；模型不支持对应字段时也会拒绝。默认值在预览和提交前用同一套逻辑解析。
+`--resolution` 映射到当前模型支持的 resolution / size / imageSize；`--mode` 映射到 mode / quality / processMode；`--duration` 对应 duration。与 `--param` 冲突会报错；模型不支持对应字段时也会拒绝。默认值在预览和提交前用同一套逻辑解析。
+
+Midjourney 的 `--num` 只能为 1，代表一次付费任务，实际固定返回 4 张并全部下载；`--mode fast|turbo|relax` 与 `--param processMode=...` 等价。版本用 `--param "version=niji 6"`，比例用 `--param aspectRatio=9:16`，不接收参考图或 `--has-image-input`。
 
 参考图可按生成命令传入；`--cost --has-image-input` 可在没有本地素材时按有参考图报价。它不能用于生成，生成必须提供实际文件。
 

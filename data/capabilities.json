@@ -633,6 +633,67 @@
         "reference_audio": false,
         "strict_end_frame": false
       }
+    },
+    "midjourney": {
+      "display_name": "Midjourney",
+      "params": {
+        "version": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "v7",
+          "options": [
+            "v7",
+            "v6",
+            "niji 6"
+          ]
+        },
+        "prompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": false
+        },
+        "aspectRatio": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1:1",
+          "options": [
+            "1:1",
+            "16:9",
+            "9:16",
+            "4:3",
+            "3:4",
+            "1:2",
+            "2:1"
+          ]
+        },
+        "processMode": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "fast",
+          "options": [
+            "fast",
+            "turbo",
+            "relax"
+          ]
+        },
+        "negativePrompt": {
+          "valueType": "string",
+          "type": "text",
+          "optional": true
+        }
+      },
+      "limits": {},
+      "client_limits": {
+        "reference_images": 0,
+        "reference_videos": false,
+        "reference_audio": false,
+        "strict_end_frame": false,
+        "fixed_output_images": 4,
+        "billing_unit": "task"
+      }
     }
   },
   "video_models": {

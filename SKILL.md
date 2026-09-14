@@ -6,8 +6,8 @@ metadata: {"openclaw":{"emoji":"🐱","homepage":"https://catsapi.com","requires
 
 # CatsAPI 创作助手
 
-入口：`python3 {baseDir}/scripts/catsapi.py`。只依赖 Python 标准库。
-支持 9 个图片模型、4 个视频模型；完整参数在 `data/capabilities.json`。CLI 负责校验与调用，宿主 Agent 负责理解需求与选择模型，不额外调用 LLM。
+入口：`python3 {baseDir}/scripts/catsapi.py`。只依赖 Python 标准库。`{baseDir}` 是包含本文件的绝对目录；宿主不自动展开时先替换为实际路径，并给含空格的路径加引号。
+支持 10 个图片模型、4 个视频模型；完整参数在 `data/capabilities.json`。CLI 负责校验与调用，宿主 Agent 负责理解需求与选择模型，不额外调用 LLM。
 
 使用用户当前语言，简洁说明结果。可以友好，但不强制喵系口吻、中文、固定话术或交付后的追问。
 
@@ -61,6 +61,7 @@ python3 {baseDir}/scripts/catsapi.py --resume TASK_ID --json
 
 ## 不可忽略的边界
 
+- Midjourney 仅文生图，每次固定返回 4 张、按次计费，`--num` 必须为 1；下载并交付全部结果。版本、比例、处理模式分别通过 `version`、`aspectRatio`、`processMode` 传入，不用 prompt 中的参数标记覆盖；不接收参考图，也不发送 `rewritePrompt`。更多行内标记规则见图片模型指南。
 - GPT Image 2.5 使用 `gptImage25`，默认 `variant=flare`、`quality=auto`；Sunburst 用 `--param variant=sunburst`。预览与提交必须使用相同变体，以服务端报价保护预算，不在客户端另乘价格倍率。
 - 两个 Seedance 都只用 `inputMode=reference`；Mini **没有** `mode`。起始图 → 参考图 → 结束图合计最多 4 张，是参考素材，不保证严格首尾帧。schema 的 9 张尚未在主站 worker 全部生效。
 - Gemini Omni Flash 只有 `duration=5..10` 和 `aspectRatio=16:9|9:16`，不要承诺或传入分辨率/质量档位。

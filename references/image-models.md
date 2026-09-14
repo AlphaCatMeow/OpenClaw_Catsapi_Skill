@@ -1,6 +1,6 @@
 # 图片模型选择
 
-这是客户端支持表，不是质量排名或实时价格表。用户点名时优先使用指定模型；当前共 9 个图片模型。
+这是客户端支持表，不是质量排名或实时价格表。用户点名时优先使用指定模型；当前共 10 个图片模型。
 
 | 模型 | model key | 主要尺寸参数 | 最多参考图 | 输出数量 |
 | --- | --- | --- | ---: | --- |
@@ -13,6 +13,7 @@
 | Seedream 5 Lite | `seedream5Lite` | `imageSize` 枚举，可选数值 `seed` | 4 | 1–4 |
 | Seedream 5 Pro | `seedream5Pro` | `imageSize` 枚举，可选数值 `seed` | 4 | 1–4 |
 | Grok Imagine Image 2 | `grokImagineImage2` | `aspectRatio` 比例字符串 | 1 | 1–4 |
+| Midjourney | `midjourney` | `aspectRatio`、`version`、`processMode`，可选 `negativePrompt` | 0 | 固定 4 张 / 次，`--num 1` |
 
 参考图用重复的 `--image PATH`，不能把输出数量 `--num` 当作参考图数量。数量超限会报错，不会自动拆成多次付费任务。
 
@@ -24,6 +25,13 @@
 - 用户明确要 Grok Image 2 时使用 `grokImagineImage2`，不误用旧版；宽泛的“Grok”不足以确定版本且差价会影响选择时再问。
 - 参考图数量先约束模型选择。不要为迁就默认模型丢弃用户素材。
 - 用户要列举/比较时才展示相关选项；无需每次展示完整菜单。
+
+## Midjourney
+
+- 默认 `version=v7`、`aspectRatio=1:1`、`processMode=fast`。版本为 `v7 / v6 / niji 6`；比例为 `1:1 / 16:9 / 9:16 / 4:3 / 3:4 / 1:2 / 2:1`；模式为 `fast / turbo / relax`。`--mode` 也可指定处理模式，报价与提交使用相同值。
+- 每次固定返回 4 张、按次计费，`--num` 只能为 1；不要改成 4 或自动拆单，实际价格以 `--cost` 为准。仅支持文生图，不接收参考图，也没有 `resolution`、`quality` 或 `rewritePrompt` 参数。
+- 负面提示词用 `--param "negativePrompt=blur, text"`。提示词最多 2500 字符；支持的行内标记有 `--sref <code>`、`--sw`、`--seed`、`--stylize`、`--chaos`、`--weird`、`--tile`、`--style raw`、`--no`。这些标记保留在 prompt 中，不作为独立的 `--param` 字段。
+- 按主站 schema，URL 和其他行内 `--` 标记不属于开放输入；比例、版本、速度/质量模式使用表单参数。遇到用户要求原样保留但含不支持标记的提示词，说明限制并确认如何处理，不擅自删改。
 
 ## 参数提醒
 

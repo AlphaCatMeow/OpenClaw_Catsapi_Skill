@@ -12,7 +12,7 @@
 
 ## 画幅映射
 
-| 目标 | GPT Image 2 / 2.5 size 示例 | Seedream imageSize / FLUX aspectRatio | Nano Banana / Grok aspectRatio |
+| 目标 | GPT Image 2 / 2.5 size 示例 | Seedream imageSize / FLUX aspectRatio | Nano Banana / Grok / Midjourney aspectRatio |
 | --- | --- | --- | --- |
 | 方图 1:1 | 1024x1024 | square | 1:1 |
 | 横屏 16:9 | 2048x1152 | landscape_16_9 | 16:9 |
@@ -30,8 +30,9 @@ GPT 的 1536x1024 是 3:2，不是 16:9；3840x1280 是 3:1，不是 21:9。精�
 - Seedream 5 Lite / Pro：`imageSize`，可选数值 `seed`；没有 resolution/quality 档位。
 - FLUX.2 Pro：`aspectRatio` 用 square / portrait_* / landscape_*，只输出 1 张。
 - Grok Imagine Image / Image 2：`aspectRatio` 用 16:9 等字符串，只接收 1 张参考图。
+- Midjourney：`aspectRatio` + `version` + `processMode`，默认 1:1 / v7 / fast；负面提示词用 `negativePrompt`，仅文生图。行内标记边界见 [图片模型](image-models.md#midjourney)。
 - Seedance 2.0：reference / fast；Mini：reference 且没有 mode。两者时长 4–15 秒。
 - Gemini Omni Flash：时长 5–10 秒、16:9 / 9:16；没有 resolution/mode。
-- `--num` 控制图片输出数量；视频必须 1。不支持的数量不要自动拆单。
+- `--num` 通常控制图片输出数量；Midjourney 必须为 1 次任务，固定返回 4 张；视频必须 1。不支持的数量不要自动拆单。
 
 所有枚举、布尔值、有限数值、模型默认值和素材数量都由脚本校验；未知参数与通过 `--param` 传文件字段会被拒绝。离线预检不检查媒体内容、线上启用状态或实时价格。

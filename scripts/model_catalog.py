@@ -11,6 +11,7 @@ IMAGE_MODELS = {
     "seedream5Lite": "Seedream 5 Lite",
     "seedream5Pro": "Seedream 5 Pro",
     "grokImagineImage2": "Grok Imagine Image 2",
+    "midjourney": "Midjourney",
 }
 VIDEO_MODELS = {
     "seedance20": "Seedance 2.0",
@@ -39,6 +40,7 @@ MODEL_ALIASES.update({
     "grokimage": "grokImagineImage",
     "grokimage2": "grokImagineImage2",
     "grokimagevideo": "grokImagineVideo",
+    "mj": "midjourney",
     "seedance2": "seedance20",
     "seedance2mini": "seedance20Mini",
 })
@@ -55,4 +57,6 @@ def client_limits(model, schema):
         "reference_videos": False,
         "reference_audio": False,
         "strict_end_frame": False,
+        # One task is billed once even though Midjourney returns four images.
+        **({"fixed_output_images": 4, "billing_unit": "task"} if model == "midjourney" else {}),
     }

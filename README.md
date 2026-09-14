@@ -8,11 +8,12 @@
 
 这不是 OpenClaw 专用插件。项目采用 [Agent Skills](https://agentskills.io/home) 的 `SKILL.md` + 脚本/参考文件结构，面向能够读取技能、执行 Python 并访问网络的 Agent；不绑定宿主使用的某个大模型。
 
-以下 Agent 均有官方 Skill 支持，可作为接入目标。**列表确认的是宿主能力与安装目录，不代表本项目已在所有客户端、版本和运行环境中完成端到端实测。** 官方文档核对日期：2026-08-31；点击 Agent 名称查看安装细节。
+以下 Agent 均有官方 Skill 支持，可作为接入目标。**列表确认的是宿主能力与安装目录，不代表本项目已在所有客户端、版本和运行环境中完成端到端实测。** 官方文档核对日期：2026-08-31（DSH 于 2026-09-14 补充核对）；点击 Agent 名称查看安装细节。
 
 | Agent | 项目 / 工作区安装目录 | 用户级安装目录 |
 | --- | --- | --- |
 | [Hermes Agent](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills/) | `.hermes/skills/catsapi/`（需信任项目） | `~/.hermes/skills/catsapi/` |
+| [DeepSeek Harness（DSH）](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/skill/skill-filesystem/README.md) | `.dsh/skills/catsapi/` 或 `.agents/skills/catsapi/` | `~/.dsh/skills/catsapi/` 或 `~/.agents/skills/catsapi/` |
 | [OpenClaw](https://docs.openclaw.ai/tools/skills) | `<workspace>/skills/catsapi/` | `~/.openclaw/skills/catsapi/` |
 | [Claude Code](https://code.claude.com/docs/en/skills) | `.claude/skills/catsapi/` | `~/.claude/skills/catsapi/` |
 | [Codex（CLI / IDE / 桌面本地任务）](https://developers.openai.com/codex/skills/) | `.agents/skills/catsapi/` | `~/.agents/skills/catsapi/` |
@@ -44,12 +45,13 @@
 | 图片 | `seedream5Lite` | Seedream 5 Lite |
 | 图片 | `seedream5Pro` | Seedream 5 Pro |
 | 图片 | `grokImagineImage2` | Grok Imagine Image 2 |
+| 图片 | `midjourney` | Midjourney |
 | 视频 | `seedance20` | Seedance 2.0 |
 | 视频 | `grokImagineVideo` | GrokImageVideo |
 | 视频 | `seedance20Mini` | Seedance 2.0 Mini |
 | 视频 | `geminiOmniFlash` | Gemini Omni Flash |
 
-共 9 个图片、4 个视频模型。CLI 也接受显示名，例如 `--model "GPT Image 2.5"`；支持名单不等于线上当前全部可用，使用 `--list` 核对线上状态。
+共 10 个图片、4 个视频模型。CLI 也接受显示名，例如 `--model "GPT Image 2.5"`；支持名单不等于线上当前全部可用，使用 `--list` 核对线上状态。
 
 ## 安装与配置
 
@@ -60,6 +62,8 @@ git clone https://github.com/maodeyu180/CatsAPI-Agent-Skill.git catsapi
 ```
 
 将完整目录放到上表对应位置，或使用宿主官方的安装 / 目录关联功能，然后确认 `catsapi` 已被发现并启用。Hermes 的项目级安装还需要按官方文档信任该项目。使用时不需要把它作为主站的 Git submodule。
+
+DSH 的项目级目录以最近的 Git 根目录为准；`catsapi/SKILL.md` 应直接位于扫描的 Skill 根目录下一层。需启用 DSH 的文件系统 Skill 加载能力，并让执行环境具备 Python、Shell 执行、联网权限和 `CATSAPI_API_KEY`。自定义 `DSH_HOME`、`DSH_AGENTS_HOME` 或 Skill 根目录时以配置为准。DSH 兼容性依据其官方加载格式核对，尚未在 DSH 中完整实测 CatsAPI 生图流程。
 
 跨宿主注意：当前入口保留了 OpenClaw 的 `metadata.openclaw` 和 `{baseDir}` 写法。`{baseDir}` 指包含 `SKILL.md` 的绝对目录，不是 shell 变量；宿主不会自动展开时，先将命令中的占位符替换成实际目录，路径含空格时加引号。若宿主严格拒绝嵌套的 OpenClaw metadata，可仅在安装副本中移除这一可选项；CLI 不依赖它。无需更改生成逻辑，也不要为了执行脚本切换工作目录。
 
@@ -98,6 +102,10 @@ python3 scripts/catsapi.py --generate --type image \
   --model seedream5Lite --prompt "窗边的橘猫" \
   --param imageSize=landscape_16_9 --dry-run
 
+python3 scripts/catsapi.py --generate --type image \
+  --model Midjourney --prompt "水彩风格的橘猫 --stylize 200" \
+  --param version=v7 --param aspectRatio=3:4 --mode fast --num 1 --dry-run
+
 python3 scripts/catsapi.py --cost --type video \
   --model seedance20Mini --resolution 720p --duration 6
 ```
@@ -125,6 +133,7 @@ python3 scripts/catsapi.py --resume TASK_ID --json
 - Nano Banana 2：最多 14 张参考图。Nano Banana 2 / Pro 默认开启联网搜索，可用 `--param enableWebSearch=false` 关闭。
 - Seedream 5 Lite / Pro：用 `imageSize`，最多 4 张参考图；可传数字 `seed`。不支持独立的 `resolution`、`quality` 或 `aspectRatio` 字段。
 - Grok Imagine Image 2：用 `aspectRatio`，最多 1 张参考图；与 GrokImage 是不同模型。
+- Midjourney：仅文生图，默认 `version=v7`、`aspectRatio=1:1`、`processMode=fast`；版本可选 `v7 / v6 / niji 6`，提供 7 种比例和 `fast / turbo / relax` 处理模式。`--mode` 对应 `processMode`，负面提示词用 `--param negativePrompt=...`。每次固定返回 4 张、按次计费，`--num` 保持 1；不接收参考图，不提供分辨率、质量或提示词重写。
 - Seedance 2.0 / Mini：默认 reference / 480p / 8 秒。Mini 没有 `mode`，不能传 `fast`。
 - 两个 Seedance 的起始图 → 参考图 → 结束图合计最多 4 张，仅作参考，不保证严格首尾帧。主站 schema 写 9 张，但 worker 仍只保留 4 张，CLI 按实际限制拒绝超限请求。
 - Gemini Omni Flash：5–10 秒，16:9 / 9:16，可选单张起始图；不提供分辨率或质量档位。

@@ -36,7 +36,7 @@ class ModelSyncTests(unittest.TestCase):
             self.body(model, *extra)
 
     def test_supported_sets_and_defaults(self):
-        self.assertEqual(len(client.SUPPORTED_MODELS["image"]), 9)
+        self.assertEqual(len(client.SUPPORTED_MODELS["image"]), 10)
         self.assertEqual(len(client.SUPPORTED_MODELS["video"]), 4)
         for kind in ("image", "video"):
             models = self.capabilities[f"{kind}_models"]
@@ -81,6 +81,36 @@ class ModelSyncTests(unittest.TestCase):
         for model in ("nanoBanana2", "nanoBananaPro"):
             body = self.body(model, "--param", "enableWebSearch=false")
             self.assertIs(body["params"]["enableWebSearch"], False)
+
+    def test_midjourney_parameters_and_fixed_task_count(self):
+        capability = self.capabilities["image_models"]["midjourney"]
+        self.assertEqual(capability["client_limits"]["reference_images"], 0)
+        self.assertEqual(capability["client_limits"]["fixed_output_images"], 4)
+        self.assertEqual(capability["client_limits"]["billing_unit"], "task")
+        self.assertEqual(self.body("midjourney")["params"], {
+            "version": "v7", "aspectRatio": "1:1", "processMode": "fast",
+        })
+        for alias in ("midjourney", "Midjourney", "MJ"):
+            self.assertEqual(client._normalize_model(alias, "image"), "midjourney")
+        for version in ("v7", "v6", "niji 6"):
+            for ratio in ("1:1", "16:9", "9:16", "4:3", "3:4", "1:2", "2:1"):
+                for mode in ("fast", "turbo", "relax"):
+                    body = self.body("midjourney", "--param", f"version={version}",
+                                     "--param", f"aspectRatio={ratio}", "--mode", mode,
+                                     "--param", "negativePrompt=blur, text")
+                    self.assertEqual(body["num_images"], 1)
+                    self.assertEqual(body["params"], {
+                        "version": version, "aspectRatio": ratio, "processMode": mode,
+                        "negativePrompt": "blur, text",
+                    })
+        for extra in (("--num", "4"), ("--num", "2"), ("--image", "ref.png"),
+                      ("--has-image-input",), ("--resolution", "2K"), ("--rewrite-prompt",),
+                      ("--param", "version=v8"), ("--param", "aspectRatio=21:9"),
+                      ("--param", "processMode=invalid"), ("--param", "quality=high"),
+                      ("--param", "seed=42"), ("--param", "imagePrompt=ref.png"),
+                      ("--mode", "turbo", "--param", "processMode=relax"),
+                      ("--prompt", "x" * 2501)):
+            self.assert_rejected("midjourney", *extra)
 
     def test_gpt25_aliases_defaults_and_parameter_limits(self):
         for alias in ("GPT Image 2.5", "gpt-image-2.5", "gptImage25"):
@@ -197,7 +227,10 @@ class ModelSyncTests(unittest.TestCase):
                 body = self.body(model, "--locale", "en")
                 self.assertEqual(body["task_type"], kind)
                 self.assertEqual(body["locale"], "en")
-                self.assertFalse(body["params"]["rewritePrompt"])
+                if model == "midjourney":
+                    self.assertNotIn("rewritePrompt", body["params"])
+                else:
+                    self.assertFalse(body["params"]["rewritePrompt"])
 
 
 if __name__ == "__main__":

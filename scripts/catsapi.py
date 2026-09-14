@@ -370,7 +370,7 @@ def _coerce_param(key: str, value: Any, field: dict) -> Any:
 def _resolve_params(args: argparse.Namespace, schema: dict) -> dict:
     supplied = _parse_params(args.param)
     for flag, fields in (("resolution", ("resolution", "size", "imageSize")),
-                         ("duration", ("duration",)), ("mode", ("mode", "quality"))):
+                         ("duration", ("duration",)), ("mode", ("mode", "quality", "processMode"))):
         value = getattr(args, flag, None)
         if value is None:
             continue
@@ -416,11 +416,16 @@ def _build_generation_body(args: argparse.Namespace, include_media: bool = True)
         _die(f"{args.model} 提示词最多 {max_chars} 字符")
     if args.generate and not (args.prompt or "").strip():
         _die("Generation requires a non-empty --prompt.")
-    image_limit = schema.get("imagePrompt", {}).get("maxFiles", 1)
+    limits = client_limits(args.model, schema)
+    image_limit = limits["reference_images"]
+    if args.type == "image" and not image_limit and (args.image or args.has_image_input):
+        _die(f"{args.model} does not support reference images.")
     if len(args.image) > image_limit:
         _die(f"{args.model} 最多支持 {image_limit} 张参考图")
     counts = schema.get("numImages", {}).get("options", ["1"])
     if str(args.num) not in [str(count) for count in counts]:
+        if limits.get("fixed_output_images"):
+            _die(f"{args.model} requires --num 1 (one billed task returning {limits['fixed_output_images']} images).")
         _die(f"{args.model} supports --num values: {', '.join(map(str, counts))}")
     if args.model in SEEDANCE_MODELS:
         params["inputMode"] = "reference"
@@ -456,7 +461,7 @@ def _cost_body(body: dict, args: argparse.Namespace) -> dict:
         "rewrite_prompt": params.get("rewritePrompt", False),
     }
     for key, fields in (("resolution", ("resolution", "size", "imageSize")),
-                        ("duration", ("duration",)), ("mode", ("mode", "quality")),
+                        ("duration", ("duration",)), ("mode", ("mode", "quality", "processMode")),
                         ("variant", ("variant",))):
         for field in fields:
             if field in params:
@@ -616,10 +621,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--param", action="append", default=[],
                    metavar="KEY=VALUE",
                    help="模型参数 / Model parameter; repeat KEY=VALUE, e.g. imageSize=landscape_16_9")
-    p.add_argument("--num", type=int, default=1, help="生成数量 (图片 1-4,视频必为 1)")
+    p.add_argument("--num", type=int, default=1,
+                   help="生成数量按模型限制; Midjourney 必为 1 次、返回 4 张 / Midjourney: 1 task, 4 outputs")
     p.add_argument("--resolution", help="resolution / size / imageSize 的快捷参数,预览与生成共用")
     p.add_argument("--duration", help="视频 duration 快捷参数 / Video duration")
-    p.add_argument("--mode", help="mode / quality 快捷参数,仅适用于支持它的模型")
+    p.add_argument("--mode", help="mode / quality / processMode 快捷参数,仅适用于支持它的模型")
     p.add_argument("--rewrite-prompt", action="store_true", help="开启提示词重写 / Enable prompt rewriting")
     p.add_argument("--locale", choices=["zh", "en"], default="zh", help="API response language")
     p.add_argument("--offline", action="store_true", help="--list / --info 使用本地快照,不读 Key、不联网")

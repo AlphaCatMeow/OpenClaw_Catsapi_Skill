@@ -30,12 +30,53 @@ class WorkflowTests(unittest.TestCase):
         return out.getvalue()
 
     def test_offline_discovery_needs_no_credentials(self):
-        for kind, count in (("image", 9), ("video", 4)):
+        for kind, count in (("image", 10), ("video", 4)):
             data = json.loads(self.run_cli("--list", "--type", kind, "--offline"))
             self.assertEqual(len(data["models"]), count)
             self.assertFalse(data["live_availability_checked"])
         info = json.loads(self.run_cli("--info", "Seedance 2.0 Mini", "--type", "video", "--offline"))
         self.assertEqual(info["client_limits"]["reference_images"], 4)
+
+    def test_midjourney_quote_submission_and_four_file_delivery(self):
+        prompt = "夜色中的猫 --sref 123 --stylize 200 --no text"
+        for mode in ("fast", "turbo", "relax"):
+            flags = ("--model", "Midjourney", "--mode", mode, "--param", "version=niji 6",
+                     "--param", "aspectRatio=9:16", "--param", "negativePrompt=blur")
+            with patch.object(client, "_post", return_value={"total_cost": 20}) as post:
+                self.run_cli("--cost", *flags)
+            post.assert_called_once()
+            quote = post.call_args.args[1]
+            self.assertEqual(post.call_args.args[0], "/api/tasks/cost-preview")
+            self.assertEqual(quote["num_images"], 1)
+            self.assertEqual(quote["mode"], mode)
+            self.assertFalse(quote["has_image_input"])
+            self.assertFalse(quote["rewrite_prompt"])
+            self.assertNotIn("resolution", quote)
+            detail = {"id": "mj-task", "status": "completed", "cost": 20,
+                      "result_images": [{"url": f"https://example.invalid/{i}.png"} for i in range(4)]}
+            with patch.object(client, "_post", side_effect=[{"total_cost": 20, "sufficient": True},
+                                                           {"id": "mj-task"}]) as post, \
+                 patch.object(client, "_get", return_value=detail), \
+                 patch.object(client, "_download") as download:
+                events = [json.loads(line) for line in self.run_cli(
+                    "--generate", *flags, "--prompt", prompt, "--max-coins", "20", "--json").splitlines()]
+            self.assertEqual([call.args[0] for call in post.call_args_list],
+                             ["/api/tasks/cost-preview", "/api/tasks"])
+            self.assertEqual(post.call_args_list[0].args[1], quote)
+            body = post.call_args.args[1]
+            self.assertEqual(body["num_images"], 1)
+            self.assertEqual(body["prompt"], prompt)
+            self.assertEqual(body["params"], {"version": "niji 6", "aspectRatio": "9:16",
+                                             "processMode": mode, "negativePrompt": "blur"})
+            self.assertNotIn("images", body)
+            self.assertEqual(download.call_count, 4)
+            self.assertEqual(events[-1]["cost"], 20)
+            self.assertEqual(len(set(events[-1]["output_files"])), 4)
+            with patch.object(client, "_post", return_value={"total_cost": 20, "sufficient": True}) as post, \
+                 self.assertRaises(SystemExit):
+                self.run_cli("--generate", *flags, "--prompt", prompt, "--max-coins", "19")
+            post.assert_called_once()
+            self.assertEqual(post.call_args.args[0], "/api/tasks/cost-preview")
 
     def test_dry_run_preserves_prompt_and_never_encodes_or_writes(self):
         with patch.object(client, "_encode_image", side_effect=AssertionError("encoding forbidden")), \
