@@ -190,7 +190,24 @@ class ModelSyncTests(unittest.TestCase):
             self.assert_rejected(key, "--param", "aspectRatio=16:9")
             self.assert_rejected(key, "--param", "resolution=2K")
         self.assertEqual(client._normalize_model("Grok Imagine Image 2", "image"), "grokImagineImage2")
-        self.assertEqual(self.body("grokImagineImage2")["params"], {"aspectRatio": "1:1", "rewritePrompt": False})
+        self.assertEqual(self.body("grokImagineImage2")["params"], {
+            "aspectRatio": "1:1", "rewritePrompt": False, "resolution": "1k",
+        })
+
+    def test_grok_resolution_defaults_quotes_and_explicit_choices(self):
+        for model, default in (("grokImagineImage", "1k"), ("grokImagineImage2", "1k")):
+            self.assertEqual(self.body(model)["params"]["resolution"], default)
+            for resolution in ("1k", "2k"):
+                args = self.args(model, "--resolution", resolution, "--num", "2")
+                body = client._build_generation_body(args, include_media=False)
+                quote = client._cost_body(body, args)
+                self.assertEqual(body["params"]["resolution"], resolution)
+                self.assertEqual(quote["resolution"], resolution)
+                self.assertEqual(quote["num_images"], body["num_images"])
+                self.assertEqual(body["params"]["aspectRatio"], "1:1")
+                self.assertIs(body["params"]["rewritePrompt"], False)
+            self.assert_rejected(model, "--resolution", "4k")
+            self.assert_rejected(model, "--param", "quality=medium")
 
     def test_mini_and_omni_do_not_inherit_unsupported_fields(self):
         for key, name in (("seedance20Mini", "Seedance 2.0 Mini"), ("geminiOmniFlash", "Gemini Omni Flash")):

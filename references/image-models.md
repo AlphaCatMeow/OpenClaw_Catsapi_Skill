@@ -9,10 +9,10 @@
 | Nano Banana 2 | `nanoBanana2` | `resolution`、`aspectRatio` | 14 | 1–4 |
 | Nano Banana Pro | `nanoBananaPro` | `resolution`、`aspectRatio` | 4 | 1–4 |
 | FLUX.2 Pro | `flux2Pro` | `aspectRatio` 枚举 | 3 | 1 |
-| Grok Imagine Image | `grokImagineImage` | `aspectRatio` 比例字符串 | 1 | 1–4 |
+| Grok Imagine Image | `grokImagineImage` | `aspectRatio` 比例字符串、`resolution=1k/2k` | 1 | 1–4 |
 | Seedream 5 Lite | `seedream5Lite` | `imageSize` 枚举，可选数值 `seed` | 4 | 1–4 |
 | Seedream 5 Pro | `seedream5Pro` | `imageSize` 枚举，可选数值 `seed` | 4 | 1–4 |
-| Grok Imagine Image 2 | `grokImagineImage2` | `aspectRatio` 比例字符串 | 1 | 1–4 |
+| Grok Imagine Image 2 | `grokImagineImage2` | `aspectRatio` 比例字符串、`resolution=1k/2k` | 1 | 1–4 |
 | Midjourney | `midjourney` | `aspectRatio`、`version`、`processMode`，可选 `negativePrompt` | 0 | 固定 4 张 / 次，`--num 1` |
 
 参考图用重复的 `--image PATH`，不能把输出数量 `--num` 当作参考图数量。数量超限会报错，不会自动拆成多次付费任务。
@@ -39,7 +39,7 @@
 - 2.5 的 Sunburst（精细）用 `--param variant=sunburst`，CatsAPI 同质量、同尺寸按 Flare 单张价的 1.25 倍四舍五入收费；这是站内定价，最终使用服务端费用预览。客户端保留 `quality=auto`，不自行换档或计算倍率。
 - 2.5 背景选项为 `auto / transparent / opaque`；透明 PNG 用 `--param background=transparent`。这些变体、背景和新增质量档位只用于 2.5，不传给 GPT Image 2。
 - Seedream 的横屏是 `imageSize=landscape_16_9`，竖屏是 `portrait_16_9`；不传 `resolution` 或 `aspectRatio`。
-- Grok Image 2 不开放 `resolution`、`quality` 或 `imageSize`。
+- Grok Imagine Image / Image 2 的 `resolution` 可选 `1k / 2k`，均默认 `1k`；不开放 `quality` 或 `imageSize`。2K 按 1K 基价的 1.5 倍四舍五入到整数猫币，最终按实时费用预览。
 - Nano Banana 2 / Pro 的 `enableWebSearch` 默认 true，可用 `--param enableWebSearch=false` 关闭；这不改变用户原始提示词。
 - 精确默认值、全部选项和提示词限制用 `--info MODEL --type image --offline` 查。未单独配置提示词上限的模型按主站 2500 字符限制；不得直接截断用户提示词。
 - 用户要求放大时，区分重新生成大图与无损放大原图；本客户端没有独立超分辨率端点，不应承诺等价效果。

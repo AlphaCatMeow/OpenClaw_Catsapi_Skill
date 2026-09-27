@@ -565,6 +565,16 @@
             "9:20",
             "1:2"
           ]
+        },
+        "resolution": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1k",
+          "options": [
+            "1k",
+            "2k"
+          ]
         }
       },
       "limits": {},
@@ -623,6 +633,16 @@
             "9:16",
             "9:20",
             "1:2"
+          ]
+        },
+        "resolution": {
+          "valueType": "string",
+          "type": "dropdown",
+          "optional": true,
+          "default": "1k",
+          "options": [
+            "1k",
+            "2k"
           ]
         }
       },

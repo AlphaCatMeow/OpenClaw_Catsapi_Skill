@@ -132,7 +132,7 @@ python3 scripts/catsapi.py --resume TASK_ID --json
 - 2.5 精细变体用 `--param variant=sunburst`，透明 PNG 用 `--param background=transparent`（也可选 auto / opaque）。Sunburst 同质量、同尺寸按 Flare 单张价的 1.25 倍四舍五入收费；CLI 向服务端传递变体查询报价并检查 `--max-coins`，不本地另乘倍率。
 - Nano Banana 2：最多 14 张参考图。Nano Banana 2 / Pro 默认开启联网搜索，可用 `--param enableWebSearch=false` 关闭。
 - Seedream 5 Lite / Pro：用 `imageSize`，最多 4 张参考图；可传数字 `seed`。不支持独立的 `resolution`、`quality` 或 `aspectRatio` 字段。
-- Grok Imagine Image 2：用 `aspectRatio`，最多 1 张参考图；与 GrokImage 是不同模型。
+- Grok Imagine Image / Image 2：用 `aspectRatio` 和 `resolution=1k/2k`，均默认 `1k`；最多 1 张参考图，两个版本分别调用。
 - Midjourney：仅文生图，默认 `version=v7`、`aspectRatio=1:1`、`processMode=fast`；版本可选 `v7 / v6 / niji 6`，提供 7 种比例和 `fast / turbo / relax` 处理模式。`--mode` 对应 `processMode`，负面提示词用 `--param negativePrompt=...`。每次固定返回 4 张、按次计费，`--num` 保持 1；不接收参考图，不提供分辨率、质量或提示词重写。
 - Seedance 2.0 / Mini：默认 reference / 480p / 8 秒。Mini 没有 `mode`，不能传 `fast`。
 - 两个 Seedance 的起始图 → 参考图 → 结束图合计最多 4 张，仅作参考，不保证严格首尾帧。主站 schema 写 9 张，但 worker 仍只保留 4 张，CLI 按实际限制拒绝超限请求。

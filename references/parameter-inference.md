@@ -29,7 +29,7 @@ GPT 的 1536x1024 是 3:2，不是 16:9；3840x1280 是 3:1，不是 21:9。精�
 - Nano Banana 2 / Pro：`resolution` + `aspectRatio`，默认 1K；联网开关是布尔值 `enableWebSearch`。
 - Seedream 5 Lite / Pro：`imageSize`，可选数值 `seed`；没有 resolution/quality 档位。
 - FLUX.2 Pro：`aspectRatio` 用 square / portrait_* / landscape_*，只输出 1 张。
-- Grok Imagine Image / Image 2：`aspectRatio` 用 16:9 等字符串，只接收 1 张参考图。
+- Grok Imagine Image / Image 2：`aspectRatio` 用 16:9 等字符串，`resolution` 可选 `1k / 2k`，均默认 `1k`；只接收 1 张参考图。
 - Midjourney：`aspectRatio` + `version` + `processMode`，默认 1:1 / v7 / fast；负面提示词用 `negativePrompt`，仅文生图。行内标记边界见 [图片模型](image-models.md#midjourney)。
 - Seedance 2.0：reference / fast；Mini：reference 且没有 mode。两者时长 4–15 秒。
 - Gemini Omni Flash：时长 5–10 秒、16:9 / 9:16；没有 resolution/mode。
